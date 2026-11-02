@@ -81,6 +81,7 @@ jobs:
             mobile/android/runtime/node-runtime-arm64.tar.gz
             mobile/android/runtime/node-runtime-arm64.sha256
             mobile/android/runtime/node-runtime-packages.txt
+            mobile/android/runtime/node-runtime-deb-checksums.txt
             mobile/android/runtime/node.dynamic.txt
             mobile/android/runtime/node.elf.txt
             mobile/android/runtime/termux-builder-image.txt
