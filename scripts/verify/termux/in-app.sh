@@ -12,7 +12,7 @@ export DEBIAN_FRONTEND=noninteractive
 export HUSKY=0
 pkg update -y
 pkg upgrade -y
-pkg install -y nodejs-lts npm git x11-repo termux-exec
+pkg install -y nodejs-lts npm git binutils x11-repo termux-exec
 pkg install -y chromium
 mkdir -p "$report/source"
 tar -xf "$report/source.tar" -C "$report/source"
@@ -26,7 +26,7 @@ npm install --prefix "$report/toolchain" --no-package-lock --ignore-scripts \
 export PATH="$report/toolchain/node_modules/.bin:$PATH"
 node --version
 npm --version
-dpkg-query -W nodejs-lts chromium termux-exec
+dpkg-query -W nodejs-lts chromium termux-exec binutils
 npm ci
 npm run build:termux
 node scripts/verify/termux/runtime.mjs
@@ -49,14 +49,22 @@ if find "$engine_filter/package" -type f -exec grep -I -n "/data/data/com.termux
   echo "The REA engine bundle still contains Termux-specific absolute paths" >&2
   exit 1
 fi
-find "$engine_filter/package/node_modules" -type f -name '*.node' -print \
-  | sed "s#^$engine_filter/package/##" > "$report/engine-artifact/native-addons-excluded.txt"
-find "$engine_filter/package/node_modules" -type f -name '*.node' -delete
-node --input-type=module - "$engine_filter/package/android-engine-manifest.json" <<'NODE'
+: > "$report/engine-artifact/native-addons-excluded.txt"
+while IFS= read -r -d '' file; do
+  if readelf -h "$file" >/dev/null 2>&1; then
+    machine="$(readelf -h "$file" | awk -F: '/Machine:/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }')"
+    if [[ "$machine" != "AArch64" ]]; then
+      printf '%s\n' "${file#"$engine_filter/package/"}" >> "$report/engine-artifact/native-addons-excluded.txt"
+      rm -f "$file"
+    fi
+  fi
+done < <(find "$engine_filter/package/node_modules" -type f -print0)
+node --input-type=module - "$engine_filter/package/android-engine-manifest.json" "$report/engine-artifact/native-addons-excluded.txt" <<'NODE'
 import { readFileSync, writeFileSync } from "node:fs";
 const path = process.argv[2];
 const manifest = JSON.parse(readFileSync(path, "utf8"));
 manifest.nativeAddonsExcludedFromArm64Bundle = true;
+manifest.excludedNativeFiles = readFileSync(process.argv[3], "utf8").split(/\r?\n/).filter(Boolean);
 writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n");
 NODE
 REA_MCP_PACKAGE_ROOT="$engine_filter/package" node scripts/verify/termux/mcp-stdio.mjs
