@@ -41,6 +41,10 @@ jobs:
         working-directory: mobile
         run: npm install --no-audit --no-fund
 
+      - name: Type-check the Android application
+        working-directory: mobile
+        run: npm run typecheck
+
       - name: Generate native Android project
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
