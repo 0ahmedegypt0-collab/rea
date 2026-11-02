@@ -6,8 +6,9 @@ import { readFile } from "node:fs/promises";
 
 const packageRoot = resolve(process.env.REA_MCP_PACKAGE_ROOT ?? process.cwd());
 const entry = resolve(packageRoot, "scripts/rea.mjs");
+const processCwd = resolve(process.env.REA_MCP_CWD ?? packageRoot);
 const child = spawn(process.execPath, [entry, "mcp"], {
-  cwd: packageRoot,
+  cwd: processCwd,
   env: {
     ...process.env,
     REA_MCP_INPUT_SCHEMA_PROFILE: "full",
