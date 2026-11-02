@@ -18,7 +18,8 @@ mkdir -p "$report/source"
 tar -xf "$report/source.tar" -C "$report/source"
 cd "$report/source"
 node -e 'if (process.platform !== "android") throw new Error("Expected Android Node.js")'
-node -e 'const expected = require("node:fs").readFileSync(".nvmrc", "utf8").trim().replace(/^v/, ""); if (process.versions.node !== expected) throw new Error(`Termux Node ${process.versions.node} differs from .nvmrc ${expected}`)'
+# The Termux package may publish a newer patch than the desktop .nvmrc;
+# runtime.mjs validates the actual supported Node engine range on Android.
 # Android uses Termux's Bionic-linked Node distribution; the desktop .nvmrc
 # binary cannot run here. Keep npm at the repository's exact pinned version.
 npm install --prefix "$report/toolchain" --no-package-lock --ignore-scripts \
