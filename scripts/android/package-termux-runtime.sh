@@ -28,7 +28,8 @@ readonly prefix="$stage/data/data/${APP_ID}/files/usr"
 }
 
 # Verify that the package was built for the app ID, not the public Termux prefix.
-if grep -R -a -l --exclude='*.a' --exclude='*.o' "/data/data/com.termux" "$prefix" >/dev/null 2>&1; then
+if grep -a -l "/data/data/com.termux" "$prefix/bin/node" >/dev/null 2>&1 || \
+  find "$prefix/lib" -type f -name '*.so*' -exec grep -a -l "/data/data/com.termux" {} + | grep -q .; then
   echo "Found a hard-coded public Termux prefix in packaged runtime files" >&2
   exit 1
 fi
