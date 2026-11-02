@@ -78,8 +78,8 @@ jobs:
         with:
           name: rea-node24-android-arm64-candidate
           path: |
-            mobile/android/runtime/node-runtime-arm64.tar.gz
-            mobile/android/runtime/node-runtime-arm64.sha256
+            mobile/android/runtime/rea-runtime-arm64.tar.gz
+            mobile/android/runtime/rea-runtime-arm64.sha256
             mobile/android/runtime/node-runtime-packages.txt
             mobile/android/runtime/node-runtime-deb-checksums.txt
             mobile/android/runtime/node.dynamic.txt
