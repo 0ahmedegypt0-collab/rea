@@ -12,7 +12,7 @@ export DEBIAN_FRONTEND=noninteractive
 export HUSKY=0
 pkg update -y
 pkg upgrade -y
-pkg install -y nodejs-lts npm git binutils x11-repo termux-exec
+pkg install -y nodejs-lts npm git binutils python clang make pkg-config x11-repo termux-exec
 pkg install -y chromium
 mkdir -p "$report/source"
 tar -xf "$report/source.tar" -C "$report/source"
