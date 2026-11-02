@@ -187,6 +187,69 @@ export default function App() {
         </View>
 
         <View style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.count}>{tools.length}</Text>
+            <Text style={styles.sectionTitle}>أدوات REA المحلية</Text>
+          </View>
+          <Text style={styles.bodyText}>
+            الأدوات تأتي من كتالوج REA الأصلي وتُنفّذ عبر محرك محلي داخل التطبيق، دون عنوان IP أو خادم خارجي.
+          </Text>
+          <TextInput
+            value={toolSearch}
+            onChangeText={setToolSearch}
+            placeholder="ابحث باسم الأداة أو وصفها"
+            placeholderTextColor={COLORS.muted}
+            style={styles.searchInput}
+            autoCapitalize="none"
+          />
+          {tools.length === 0 ? (
+            <Text style={styles.empty}>كتالوج الأدوات سيظهر بعد تثبيت محرك REA وتشغيله</Text>
+          ) : (
+            <ScrollView style={styles.toolList} nestedScrollEnabled>
+              {tools.filter((tool) => (tool.name + " " + (tool.description ?? "")).toLowerCase().includes(toolSearch.toLowerCase())).slice(0, 80).map((tool) => (
+                <TouchableOpacity
+                  key={tool.name}
+                  style={[styles.toolItem, selectedTool?.name === tool.name && styles.toolItemActive]}
+                  onPress={() => { setSelectedTool(tool); setToolArguments("{}"); setToolResult(""); }}
+                >
+                  <Text style={styles.toolName}>{tool.name}</Text>
+                  {!!tool.description && <Text style={styles.toolDescription} numberOfLines={2}>{tool.description}</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          {selectedTool && (
+            <>
+              <Text style={styles.selectedTool}>الأداة المحددة: {selectedTool.name}</Text>
+              <TextInput
+                value={toolArguments}
+                onChangeText={setToolArguments}
+                placeholder='{"key":"value"}'
+                placeholderTextColor={COLORS.muted}
+                style={styles.jsonInput}
+                multiline
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity
+                style={[styles.primaryButton, toolBusy && styles.buttonDisabled]}
+                onPress={executeTool}
+                disabled={toolBusy}
+              >
+                {toolBusy ? <ActivityIndicator color={COLORS.bg} /> : <Text style={styles.primaryText}>تنفيذ الأداة محليًا</Text>}
+              </TouchableOpacity>
+              {!!toolResult && <Text selectable style={styles.toolResult}>{toolResult}</Text>}
+              <TouchableOpacity
+                style={styles.stopButton}
+                onPress={() => ReaRuntime.stopMcp().then(() => setEngineStatus("تم إيقاف محرك MCP المحلي"))}
+              >
+                <Text style={styles.stopText}>إيقاف محرك MCP</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>خطة التوافق</Text>
           <View style={styles.planRow}><Text style={styles.planState}>قيد العمل</Text><Text style={styles.planText}>تضمين Node.js ومحرك REA داخل التطبيق</Text></View>
           <View style={styles.planRow}><Text style={styles.planState}>التالي</Text><Text style={styles.planText}>توصيل كتالوج الأدوات ومخططات الإدخال</Text></View>
@@ -236,6 +299,17 @@ const styles = StyleSheet.create({
   savedMark: { borderColor: "#397B60", borderWidth: 1, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 4 },
   savedMarkText: { color: COLORS.green, fontSize: 10, fontWeight: "700" },
   error: { color: COLORS.red, fontSize: 11, textAlign: "left" },
+  searchInput: { backgroundColor: "#0A1321", borderColor: COLORS.line, borderWidth: 1, borderRadius: 10, color: COLORS.text, padding: 11, textAlign: "right" },
+  toolList: { maxHeight: 260, borderWidth: 1, borderColor: COLORS.line, borderRadius: 10 },
+  toolItem: { padding: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: COLORS.line, gap: 4 },
+  toolItemActive: { backgroundColor: "#26344A", borderLeftWidth: 3, borderLeftColor: COLORS.gold },
+  toolName: { color: COLORS.gold, fontSize: 12, fontWeight: "800", textAlign: "left" },
+  toolDescription: { color: COLORS.muted, fontSize: 10, lineHeight: 16, textAlign: "left" },
+  selectedTool: { color: COLORS.text, fontSize: 12, fontWeight: "800", textAlign: "left" },
+  jsonInput: { minHeight: 110, maxHeight: 220, backgroundColor: "#070C14", borderColor: COLORS.line, borderWidth: 1, borderRadius: 10, color: COLORS.text, padding: 12, fontFamily: "monospace", textAlignVertical: "top" },
+  toolResult: { color: "#D7E3F4", backgroundColor: "#070C14", borderRadius: 10, padding: 12, fontSize: 10, lineHeight: 16, fontFamily: "monospace", textAlign: "left" },
+  stopButton: { borderColor: COLORS.red, borderWidth: 1, borderRadius: 10, padding: 10, alignItems: "center" },
+  stopText: { color: COLORS.red, fontSize: 11, fontWeight: "800" },
   planRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomColor: COLORS.line, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 9, gap: 10 },
   planState: { color: COLORS.gold, fontSize: 10, fontWeight: "800" },
   planText: { flex: 1, color: COLORS.text, fontSize: 12, textAlign: "right" },
