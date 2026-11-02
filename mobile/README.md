@@ -6,7 +6,7 @@ The target is a **standalone Android application**. The normal app must start it
 
 The complete REA tool catalog must remain present. A Windows/macOS/Linux provider is not to be deleted because it is not Android-compatible: it must be ported, replaced with a functionally equivalent Android implementation where possible, or retained with an explicit platform restriction and its original contract.
 
-See [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md) for the 66-group inventory, technical plan, platform boundaries and acceptance criteria.
+See [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md) for the 66-group inventory, technical plan, platform boundaries and acceptance criteria. See [ANDROID_RUNTIME_SPIKE.md](./ANDROID_RUNTIME_SPIKE.md) for the verified Node 24/Bionic build route and the app-specific runtime packaging investigation.
 
 ## Honest current state
 
