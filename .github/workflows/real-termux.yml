@@ -68,7 +68,7 @@ jobs:
 
       - name: Download app-private Node runtime candidate
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: rea-android-runtime-arm64-candidate
           path: ${{ runner.temp }}/rea-termux/node-runtime
