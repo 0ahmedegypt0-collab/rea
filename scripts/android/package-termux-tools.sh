@@ -37,6 +37,10 @@ prefix="$STAGE_DIR/data/data/$APP_ID/files/usr"
   echo "The base shell/text utilities are incomplete" >&2
   exit 1
 }
+[[ -x "$prefix/bin/wasmtime" && -x "$prefix/bin/wasm-objdump" && -x "$prefix/bin/wasm2wat" && -x "$prefix/bin/wat2wasm" && -x "$prefix/bin/wasm-validate" ]] || {
+  echo "The WebAssembly analysis toolchain is incomplete" >&2
+  exit 1
+}
 
 mkdir -p "$OUTPUT_DIR"
 rm -f "$OUTPUT_DIR/rea-tools-arm64.tar.gz" "$OUTPUT_DIR/rea-tools-arm64.sha256"
