@@ -41,4 +41,6 @@ jobs:
           fi
           git add -u
           git commit -m "style: apply repository formatter"
+          git fetch origin main
+          git rebase origin/main
           git push
