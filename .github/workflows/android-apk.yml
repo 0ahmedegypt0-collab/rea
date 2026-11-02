@@ -133,7 +133,7 @@ jobs:
             adb shell monkey -p tools.rea.mobile 1
             ready=false
             for attempt in $(seq 1 450); do
-              logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
+              logs="$(adb logcat -d -s REA_RUNTIME:V)"
               if grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs" && grep -q "MCP_TOOL_CALL_READY name=inspect_analysis_settings" <<<"$logs"; then
                 ready=true
                 break
@@ -144,7 +144,7 @@ jobs:
               fi
               sleep 2
             done
-            logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
+            logs="$(adb logcat -d -s REA_RUNTIME:V)"
             printf '%s\n' "$logs"
             test "$ready" = true
             grep -q "NODE_READY" <<<"$logs"
