@@ -34,11 +34,7 @@ class ReaRuntimeModule : Module() {
   private var mcpRequestId = 0
   private var mcpInitializeResult: String? = null
 
-  private fun appFilesDirectory(): File {
-    val context = appContext.reactContext
-      ?: throw IllegalStateException("Android application context is unavailable")
-    return context.filesDir
-  }
+  private fun appFilesDirectory(): File = appContext.persistentFilesDirectory
 
   private fun runtimePrefix(): File = File(appFilesDirectory(), "usr")
   private fun engineDirectory(): File = File(appFilesDirectory(), "rea-engine")
