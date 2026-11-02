@@ -59,6 +59,7 @@ while IFS= read -r -d '' file; do
     fi
   fi
 done < <(find "$engine_filter/package/node_modules" -type f -print0)
+find "$engine_filter/package/node_modules" -type l ! -exec test -e {} \; -delete
 node --input-type=module - "$engine_filter/package/android-engine-manifest.json" "$report/engine-artifact/native-addons-excluded.txt" <<'NODE'
 import { readFileSync, writeFileSync } from "node:fs";
 const path = process.argv[2];
