@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit
 class ReaRuntimeModule : Module() {
   private val archiveName = "rea-runtime-arm64.tar.gz"
   private val checksumName = "rea-runtime-arm64.sha256"
-  private val appId = "tools.rea.mobile"
 
   private fun appFilesDirectory(): File {
     val context = appContext.reactContext
