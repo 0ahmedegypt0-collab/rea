@@ -95,7 +95,6 @@ export default function App() {
             واجهة الاتصال بخادم خارجي أُخرجت من مسار التطبيق. يجري تجهيز Runtime متوافق مع Android
             ثم ربط أدوات REA الأصلية به. لن نعرض أداة على أنها تعمل قبل اختبارها فعليًا على Android.
           </Text>
-          <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
           <Text style={styles.hint}>{status}</Text>
         </View>
 
@@ -156,8 +155,6 @@ const styles = StyleSheet.create({
   sectionTitle: { color: COLORS.gold, fontSize: 16, fontWeight: "800", textAlign: "right" },
   pendingTitle: { color: COLORS.text, fontSize: 15, fontWeight: "800", textAlign: "right" },
   bodyText: { color: COLORS.muted, fontSize: 12, lineHeight: 20, textAlign: "right" },
-  progressTrack: { height: 6, borderRadius: 4, backgroundColor: "#263247", overflow: "hidden" },
-  progressFill: { width: "24%", height: 6, borderRadius: 4, backgroundColor: COLORS.gold },
   hint: { color: COLORS.green, fontSize: 11, textAlign: "right" },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   count: { color: COLORS.gold, fontWeight: "900", fontSize: 15 },
