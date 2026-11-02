@@ -103,6 +103,19 @@ try {
   if (new Set(names).size !== names.length) {
     throw new Error("The local REA MCP process returned duplicate tool names");
   }
+  if (!names.includes("inspect_analysis_settings")) {
+    throw new Error("The provider-free REA settings diagnostic tool is missing");
+  }
+  const diagnostic = await request("tools/call", {
+    name: "inspect_analysis_settings",
+    arguments: {},
+  });
+  if (diagnostic.error || diagnostic.result?.isError) {
+    throw new Error(`The provider-free MCP tool call failed: ${JSON.stringify(diagnostic.error ?? diagnostic.result)}`);
+  }
+  if (!Array.isArray(diagnostic.result?.content) || diagnostic.result.content.length === 0) {
+    throw new Error("The provider-free MCP tool call returned no content");
+  }
 
   const catalog = JSON.parse(await readFile(resolve(packageRoot, "dist/mcp-catalog-full.json"), "utf8"));
   if (tools.length !== catalog.tools.length) {
