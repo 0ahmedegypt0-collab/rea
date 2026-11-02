@@ -73,6 +73,7 @@ writeFileSync(join(root, "android-engine-manifest.json"), JSON.stringify(manifes
 NODE
 
 node "$OUTPUT_DIR/staging/package/scripts/rea.mjs" --version
+REA_MCP_PACKAGE_ROOT="$OUTPUT_DIR/staging/package" node scripts/verify/termux/mcp-stdio.mjs
 tar -czf "$OUTPUT_DIR/rea-engine-js.tar.gz" -C "$OUTPUT_DIR/staging" package
 (cd "$OUTPUT_DIR" && sha256sum rea-engine-js.tar.gz > rea-engine-js.sha256)
 cp "$OUTPUT_DIR/staging/package/android-engine-manifest.json" "$OUTPUT_DIR/android-engine-manifest.json"
