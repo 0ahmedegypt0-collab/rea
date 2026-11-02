@@ -2,6 +2,9 @@ name: Real Termux browser verification
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build app-private Android Node runtime"]
+    types: [completed]
 
 concurrency:
   group: real-termux-${{ github.ref }}
@@ -9,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   HUSKY: "0"
@@ -20,6 +24,7 @@ env:
 
 jobs:
   real-termux:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -60,3 +65,43 @@ jobs:
           name: termux-browser-diagnostics
           path: ${{ runner.temp }}/rea-termux/diagnostics
           if-no-files-found: warn
+
+      - name: Download app-private Node runtime candidate
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: rea-node24-android-arm64-candidate
+          path: ${{ runner.temp }}/rea-termux/node-runtime
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Assemble complete Android engine assets
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          mkdir -p "${{ runner.temp }}/rea-termux/android-assets"
+          cp "${{ runner.temp }}/rea-termux/node-runtime/rea-runtime-arm64.tar.gz" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/node-runtime/rea-runtime-arm64.sha256" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.tar.gz" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.sha256" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/engine-artifact/android-engine-manifest.json" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/engine-artifact/native-addons.txt" "${{ runner.temp }}/rea-termux/android-assets/"
+          (cd "${{ runner.temp }}/rea-termux/android-assets" && sha256sum --check rea-runtime-arm64.sha256 && sha256sum --check rea-engine-js.sha256)
+
+      - name: Upload combined Android engine assets
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rea-android-engine-assets
+          path: ${{ runner.temp }}/rea-termux/android-assets
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload REA JavaScript engine bundle
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rea-engine-js-candidate
+          path: ${{ runner.temp }}/rea-termux/engine-artifact
+          if-no-files-found: error
+          retention-days: 14
