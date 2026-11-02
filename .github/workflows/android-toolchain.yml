@@ -1,0 +1,105 @@
+name: Build app-private Android toolchain
+
+on:
+  workflow_run:
+    workflows: ["Build app-private Android Node runtime"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: android-toolchain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-tools-and-merge-runtime:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout REA
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Termux package recipes
+        uses: actions/checkout@v4
+        with:
+          repository: termux/termux-packages
+          ref: d4e5b905c5582a33cd77922a9b7bb4f05b80104c
+          path: termux-packages
+
+      - name: Rebuild package prefix for this Android application ID
+        working-directory: termux-packages
+        run: |
+          sed -i 's/^TERMUX_APP__PACKAGE_NAME="com.termux"/TERMUX_APP__PACKAGE_NAME="tools.rea.mobile"/' scripts/properties.sh
+          grep -F 'TERMUX_APP__PACKAGE_NAME="tools.rea.mobile"' scripts/properties.sh
+
+      - name: Free disk space for Android toolchain build
+        working-directory: termux-packages
+        run: ./scripts/free-space.sh
+
+      - name: Install host package inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev binutils
+
+      - name: Download Node runtime candidate from the triggering build
+        uses: actions/download-artifact@v4
+        with:
+          name: rea-node24-android-arm64-candidate
+          path: ${{ runner.temp }}/rea-node-runtime
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read the exact Termux builder image digest
+        id: builder
+        run: |
+          image="$(cat "${{ runner.temp }}/rea-node-runtime/termux-builder-image.txt")"
+          [[ "$image" == ghcr.io/termux/package-builder@sha256:* ]]
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Pull the exact builder image used for Node
+        run: docker pull "${{ steps.builder.outputs.image }}"
+
+      - name: Build Android userland tools and Python runtime
+        working-directory: termux-packages
+        env:
+          TERMUX_BUILDER_IMAGE_NAME: ${{ steps.builder.outputs.image }}
+        run: |
+          ./scripts/run-docker.sh ./build-package.sh -C -a aarch64 -j2 \
+            bash coreutils termux-exec grep sed gawk findutils \
+            python python-pip git binutils jq android-tools \
+            unzip zip procps
+
+      - name: Package the app-private toolchain prefix
+        run: bash scripts/android/package-termux-tools.sh mobile/android/toolchain
+
+      - name: Merge Node and toolchain prefixes
+        run: |
+          stage="${{ runner.temp }}/rea-merged-prefix"
+          output="${{ runner.temp }}/rea-android-runtime"
+          rm -rf "$stage" "$output"
+          mkdir -p "$stage" "$output"
+          tar -xzf "${{ runner.temp }}/rea-node-runtime/rea-runtime-arm64.tar.gz" -C "$stage"
+          tar -xzf "mobile/android/toolchain/rea-tools-arm64.tar.gz" -C "$stage"
+          test -x "$stage/usr/bin/node"
+          test -x "$stage/usr/bin/bash"
+          test -x "$stage/usr/bin/python"
+          test -x "$stage/usr/bin/adb"
+          tar -czf "$output/rea-runtime-arm64.tar.gz" -C "$stage" usr
+          (cd "$output" && sha256sum rea-runtime-arm64.tar.gz > rea-runtime-arm64.sha256)
+          cp mobile/android/toolchain/rea-tools-packages.txt "$output/"
+          cp mobile/android/toolchain/rea-tools-deb-checksums.txt "$output/"
+          cp mobile/android/toolchain/termux-exec-libraries.txt "$output/"
+          cp mobile/android/toolchain/toolchain-manifest.json "$output/"
+          cp "${{ runner.temp }}/rea-node-runtime/termux-builder-image.txt" "$output/"
+
+      - name: Upload merged standalone Android runtime candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rea-android-runtime-arm64-candidate
+          path: ${{ runner.temp }}/rea-android-runtime
+          if-no-files-found: error
+          retention-days: 14
