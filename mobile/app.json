@@ -8,8 +8,7 @@
     "newArchEnabled": true,
     "android": {
       "package": "tools.rea.mobile",
-      "minSdkVersion": 26,
-      "usesCleartextTraffic": false
+      "minSdkVersion": 26
     }
   }
 }
