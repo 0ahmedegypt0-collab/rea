@@ -7,8 +7,7 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "android": {
-      "package": "tools.rea.mobile",
-      "usesCleartextTraffic": true
+      "package": "tools.rea.mobile"
     }
   }
 }
