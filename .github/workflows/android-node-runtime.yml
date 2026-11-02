@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "scripts/android/package-termux-runtime.sh"
-      - "scripts/verify/termux/runtime.mjs"
+      - "scripts/android/**"
       - ".github/workflows/android-node-runtime.yml"
 
 permissions:
