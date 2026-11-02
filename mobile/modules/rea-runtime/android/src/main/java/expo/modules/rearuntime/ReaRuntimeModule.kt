@@ -204,7 +204,7 @@ class ReaRuntimeModule : Module() {
     val config = File(files, "config").apply { mkdirs() }
     val cache = File(files, "cache").apply { mkdirs() }
     val state = File(files, "state").apply { mkdirs() }
-    return mutableMapOf(
+    val environment = mutableMapOf(
       "PREFIX" to prefix.absolutePath,
       "TERMUX_PREFIX" to prefix.absolutePath,
       "HOME" to home.absolutePath,
@@ -217,6 +217,9 @@ class ReaRuntimeModule : Module() {
       "REA_MCP_INPUT_SCHEMA_PROFILE" to "full",
       "REA_MCP_OUTPUT_SCHEMA_PROFILE" to "full",
     )
+    val termuxExec = File(prefix, "lib/libtermux-exec-ld-preload.so")
+    if (termuxExec.isFile) environment["LD_PRELOAD"] = termuxExec.absolutePath
+    return environment
   }
 
   private fun mcpRequestInternal(method: String, params: JSONObject): JSONObject {
@@ -476,6 +479,8 @@ class ReaRuntimeModule : Module() {
         put("TMPDIR", temp.absolutePath)
         put("PATH", "${File(prefix, "bin").absolutePath}:/system/bin:/system/xbin")
         put("LD_LIBRARY_PATH", File(prefix, "lib").absolutePath)
+        val termuxExec = File(prefix, "lib/libtermux-exec-ld-preload.so")
+        if (termuxExec.isFile) put("LD_PRELOAD", termuxExec.absolutePath)
       }
 
       val child = process.start()
