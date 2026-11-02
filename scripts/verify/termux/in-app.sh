@@ -68,7 +68,8 @@ manifest.nativeAddonsExcludedFromArm64Bundle = true;
 manifest.excludedNativeFiles = readFileSync(process.argv[3], "utf8").split(/\r?\n/).filter(Boolean);
 writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n");
 NODE
-REA_MCP_PACKAGE_ROOT="$engine_filter/package" node scripts/verify/termux/mcp-stdio.mjs
+mkdir -p "$report/workspace"
+REA_MCP_PACKAGE_ROOT="$engine_filter/package" REA_MCP_CWD="$report/workspace" node scripts/verify/termux/mcp-stdio.mjs
 tar -czf "$report/engine-artifact/rea-engine-js.tar.gz" -C "$engine_filter" package
 (cd "$report/engine-artifact" && sha256sum rea-engine-js.tar.gz > rea-engine-js.sha256)
 cp "$engine_filter/package/android-engine-manifest.json" "$report/engine-artifact/android-engine-manifest.json"
