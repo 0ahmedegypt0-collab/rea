@@ -166,6 +166,14 @@ jobs:
             adb shell run-as tools.rea.mobile test -x files/usr/bin/wasm2wat
             adb shell run-as tools.rea.mobile test -x files/usr/bin/wat2wasm
             adb shell run-as tools.rea.mobile test -x files/usr/bin/wasm-validate
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/strace
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/ltrace
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/yara
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/mmls
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/fls
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/icat
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/fsstat
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/tsk_recover
             adb shell run-as tools.rea.mobile test -x files/usr/bin/gdb
             adb shell run-as tools.rea.mobile test -x files/usr/bin/binwalk
             adb shell run-as tools.rea.mobile test -x files/usr/bin/apksigner
@@ -204,4 +212,12 @@ jobs:
               "$PREFIX/bin/wasm2wat" --version >/dev/null
               "$PREFIX/bin/wat2wasm" --version >/dev/null
               "$PREFIX/bin/wasm-validate" --version >/dev/null
+              "$PREFIX/bin/strace" -V >/dev/null
+              "$PREFIX/bin/ltrace" -V >/dev/null
+              "$PREFIX/bin/yara" --version >/dev/null
+              "$PREFIX/bin/mmls" -V >/dev/null
+              "$PREFIX/bin/fls" -V >/dev/null
+              "$PREFIX/bin/icat" -V >/dev/null
+              "$PREFIX/bin/fsstat" -V >/dev/null
+              "$PREFIX/bin/tsk_recover" -V >/dev/null
             '
