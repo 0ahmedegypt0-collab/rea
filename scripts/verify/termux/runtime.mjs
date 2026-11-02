@@ -20,7 +20,11 @@ const supported =
   (major === 24 && (minor > 22 || (minor === 22 && patch >= 1))) ||
   major > 26 ||
   (major === 26 && (minor > 12 || (minor === 12 && patch >= 1)));
-assert.equal(process.platform, "android", "Expected the Android/Bionic Node build");
+assert.equal(
+  process.platform,
+  "android",
+  "Expected the Android/Bionic Node build",
+);
 assert.ok(supported, `Node ${version} is outside REA's engine range`);
 assert.match(packageJson.engines.node, /22\.23\.4/);
 assert.ok(["arm64", "x64", "arm", "ia32"].includes(process.arch));
@@ -52,7 +56,9 @@ try {
   assert.equal(workerMessage, "worker-ok");
   await worker.terminate();
 
-  const server = createServer((_request, response) => response.end("loopback-ok"));
+  const server = createServer((_request, response) =>
+    response.end("loopback-ok"),
+  );
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   try {

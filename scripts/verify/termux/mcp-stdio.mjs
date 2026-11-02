@@ -51,7 +51,11 @@ child.stderr.on("data", (chunk) => {
 child.on("exit", (code, signal) => {
   for (const [key, waiter] of pending) {
     clearTimeout(waiter.timer);
-    waiter.reject(new Error(`MCP process exited before response ${key} (code=${code}, signal=${signal})\n${stderr}`));
+    waiter.reject(
+      new Error(
+        `MCP process exited before response ${key} (code=${code}, signal=${signal})\n${stderr}`,
+      ),
+    );
   }
   pending.clear();
 });
@@ -67,11 +71,15 @@ function request(method, params) {
   const promise = new Promise((resolvePromise, rejectPromise) => {
     const timer = setTimeout(() => {
       pending.delete(key);
-      rejectPromise(new Error(`Timed out waiting for MCP ${method}\n${stderr}`));
+      rejectPromise(
+        new Error(`Timed out waiting for MCP ${method}\n${stderr}`),
+      );
     }, 60000);
     pending.set(key, { resolve: resolvePromise, reject: rejectPromise, timer });
   });
-  child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
+  child.stdin.write(
+    JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n",
+  );
   return promise;
 }
 
@@ -82,11 +90,13 @@ try {
     clientInfo: { name: "rea-termux-mcp-smoke", version: "1.0.0" },
   });
   if (initialized.error) throw new Error(JSON.stringify(initialized.error));
-  child.stdin.write(JSON.stringify({
-    jsonrpc: "2.0",
-    method: "notifications/initialized",
-    params: {},
-  }) + "\n");
+  child.stdin.write(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+      params: {},
+    }) + "\n",
+  );
 
   const tools = [];
   let cursor;
@@ -94,43 +104,64 @@ try {
     const listed = await request("tools/list", cursor ? { cursor } : {});
     if (listed.error) throw new Error(JSON.stringify(listed.error));
     const page = listed.result?.tools;
-    if (!Array.isArray(page)) throw new Error("The local REA MCP process returned an invalid tools page");
+    if (!Array.isArray(page))
+      throw new Error(
+        "The local REA MCP process returned an invalid tools page",
+      );
     tools.push(...page);
     cursor = listed.result?.nextCursor ?? undefined;
   } while (cursor);
-  if (tools.length === 0) throw new Error("The local REA MCP process returned no tools");
+  if (tools.length === 0)
+    throw new Error("The local REA MCP process returned no tools");
   const names = tools.map((tool) => tool.name);
   if (new Set(names).size !== names.length) {
     throw new Error("The local REA MCP process returned duplicate tool names");
   }
   if (!names.includes("inspect_analysis_settings")) {
-    throw new Error("The provider-free REA settings diagnostic tool is missing");
+    throw new Error(
+      "The provider-free REA settings diagnostic tool is missing",
+    );
   }
   const diagnostic = await request("tools/call", {
     name: "inspect_analysis_settings",
     arguments: {},
   });
   if (diagnostic.error || diagnostic.result?.isError) {
-    throw new Error(`The provider-free MCP tool call failed: ${JSON.stringify(diagnostic.error ?? diagnostic.result)}`);
+    throw new Error(
+      `The provider-free MCP tool call failed: ${JSON.stringify(diagnostic.error ?? diagnostic.result)}`,
+    );
   }
-  if (!Array.isArray(diagnostic.result?.content) || diagnostic.result.content.length === 0) {
+  if (
+    !Array.isArray(diagnostic.result?.content) ||
+    diagnostic.result.content.length === 0
+  ) {
     throw new Error("The provider-free MCP tool call returned no content");
   }
 
-  const catalog = JSON.parse(await readFile(resolve(packageRoot, "dist/mcp-catalog-full.json"), "utf8"));
+  const catalog = JSON.parse(
+    await readFile(resolve(packageRoot, "dist/mcp-catalog-full.json"), "utf8"),
+  );
   if (tools.length !== catalog.tools.length) {
-    throw new Error(`MCP tools/list returned ${tools.length}; full catalog records ${catalog.tools.length}`);
+    throw new Error(
+      `MCP tools/list returned ${tools.length}; full catalog records ${catalog.tools.length}`,
+    );
   }
 
-  console.log(JSON.stringify({
-    status: "passed",
-    node: process.version,
-    platform: process.platform,
-    architecture: process.arch,
-    protocolVersion: initialized.result?.protocolVersion,
-    toolCount: tools.length,
-    firstTool: names[0],
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        status: "passed",
+        node: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+        protocolVersion: initialized.result?.protocolVersion,
+        toolCount: tools.length,
+        firstTool: names[0],
+      },
+      null,
+      2,
+    ),
+  );
 } catch (cause) {
   child.kill("SIGTERM");
   throw cause;
@@ -142,5 +173,6 @@ try {
       new Promise((resolvePromise) => setTimeout(resolvePromise, 3000)),
     ]);
   }
-  if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  if (child.exitCode === null && child.signalCode === null)
+    child.kill("SIGKILL");
 }

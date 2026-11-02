@@ -19,17 +19,21 @@ export class ReaMcpClient {
   private requestId = 0;
   constructor(private endpoint: string) {}
 
-  private async post(message: Record<string, unknown>, initializing = false): Promise<McpReply> {
+  private async post(
+    message: Record<string, unknown>,
+    initializing = false,
+  ): Promise<McpReply> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "Accept": "application/json, text/event-stream"
+      Accept: "application/json, text/event-stream",
     };
-    if (this.sessionId && !initializing) headers["Mcp-Session-Id"] = this.sessionId;
+    if (this.sessionId && !initializing)
+      headers["Mcp-Session-Id"] = this.sessionId;
 
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers,
-      body: JSON.stringify(message)
+      body: JSON.stringify(message),
     });
     if (!response.ok && response.status !== 202) {
       const detail = await response.text().catch(() => "");
@@ -42,8 +46,12 @@ export class ReaMcpClient {
     const body = await response.text();
     if (!body.trim()) return {};
     if (body.includes("event:") || body.includes("data:")) {
-      const data = body.split(/\r?\n/).filter(line => line.startsWith("data:"))
-        .map(line => line.slice(5).trim()).filter(Boolean).join("\n");
+      const data = body
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trim())
+        .filter(Boolean)
+        .join("\n");
       if (!data || data === "[DONE]") return {};
       return JSON.parse(data) as McpReply;
     }
@@ -56,16 +64,19 @@ export class ReaMcpClient {
   }
 
   async connect(): Promise<void> {
-    await this.post({
-      jsonrpc: "2.0",
-      id: this.nextId(),
-      method: "initialize",
-      params: {
-        protocolVersion: "2025-03-26",
-        capabilities: {},
-        clientInfo: { name: "rea-mobile", version: "0.1.0" }
-      }
-    }, true);
+    await this.post(
+      {
+        jsonrpc: "2.0",
+        id: this.nextId(),
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          capabilities: {},
+          clientInfo: { name: "rea-mobile", version: "0.1.0" },
+        },
+      },
+      true,
+    );
     await this.post({ jsonrpc: "2.0", method: "notifications/initialized" });
   }
 
@@ -74,18 +85,22 @@ export class ReaMcpClient {
       jsonrpc: "2.0",
       id: this.nextId(),
       method: "tools/list",
-      params: {}
+      params: {},
     });
-    if (reply.error) throw new Error(reply.error.message ?? "تعذر تحميل قائمة الأدوات");
+    if (reply.error)
+      throw new Error(reply.error.message ?? "تعذر تحميل قائمة الأدوات");
     return reply.result?.tools ?? [];
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<McpReply> {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<McpReply> {
     const reply = await this.post({
       jsonrpc: "2.0",
       id: this.nextId(),
       method: "tools/call",
-      params: { name, arguments: args }
+      params: { name, arguments: args },
     });
     if (reply.error) throw new Error(reply.error.message ?? "فشل تنفيذ الأداة");
     return reply;
@@ -95,7 +110,7 @@ export class ReaMcpClient {
     if (!this.sessionId) return;
     await fetch(this.endpoint, {
       method: "DELETE",
-      headers: { "Mcp-Session-Id": this.sessionId }
+      headers: { "Mcp-Session-Id": this.sessionId },
     }).catch(() => undefined);
     this.sessionId = undefined;
   }

@@ -20,6 +20,7 @@ The recipe's runtime dependencies are:
 The recipe deliberately does **not** use shared libuv because of an Android linker issue involving symbol resolution for `dlopen()`. It builds host ICU and LLVM tooling, uses Ninja, and configures Node with shared OpenSSL, c-ares, SQLite and zlib. This is a real Android/Bionic build route, but it is not a small prebuilt executable that can safely be copied into an unrelated APK.
 
 Sources:
+
 - [Termux nodejs-lts build recipe](https://github.com/termux/termux-packages/blob/master/packages/nodejs-lts/build.sh)
 - [Termux package build process](https://github.com/termux/termux-packages/wiki/Building-packages)
 
@@ -54,10 +55,10 @@ This gives REA a much stronger candidate than copying the public Termux binary: 
 The remaining proof is to pin a Termux packages commit, override its build properties reproducibly, build Node and every required dependency for that custom app ID, inspect all embedded paths/ELF dependencies, and launch it from the REA process. The package-build documentation states that custom app IDs require rebuilding packages rather than mixing in the official repository binaries.
 
 Sources:
+
 - [Termux package build configuration](https://github.com/termux/termux-packages/wiki/Building-packages)
 - [Termux build properties and app data/prefix variables](https://github.com/termux/termux-packages/blob/master/scripts/properties.sh)
 - [Termux private prefix layout](https://github.com/termux/termux-packages/wiki/Termux-file-system-layout)
-
 
 ## Reproducible runtime-candidate build
 
@@ -66,7 +67,6 @@ The repository now contains `.github/workflows/android-node-runtime.yml` and `sc
 The workflow checks out Termux package recipes at commit `d4e5b905c5582a33cd77922a9b7bb4f05b80104c`, changes the Termux app ID in the build properties to the REA Android application ID `tools.rea.mobile`, and invokes the official Termux package-builder container to build `nodejs-lts` plus its Bionic dependencies for `aarch64`. The package outputs are unpacked into the exact app-private prefix `/data/data/tools.rea.mobile/files/usr`, then the Node ELF header, Android linker interpreter, dynamic dependencies and old default Termux prefix references are checked. The workflow uploads the runtime archive and inspection evidence.
 
 This workflow is a **candidate-build stage**, not proof of runtime execution inside the APK. The next required stage is to place the archive in an Android test host, extract it under the REA app's actual private files directory, launch Node under the REA application UID/SELinux domain, and run the REA CLI/MCP smoke tests. The runtime is not wired into the current Expo UI until that Android process test passes.
-
 
 ## Verified Node 24 candidate (2026-11-02)
 
