@@ -207,6 +207,18 @@ class ReaRuntimeModule : Module() {
       if (child.exitValue() != 0) {
         throw IllegalStateException("Embedded Node failed (exit ${child.exitValue()}): $output")
       }
+      val match = Regex("^v(\\d+)\\.(\\d+)\\.(\\d+)$").matchEntire(output)
+        ?: throw IllegalStateException("Unexpected Node version output: $output")
+      val major = match.groupValues[1].toInt()
+      val minor = match.groupValues[2].toInt()
+      val patch = match.groupValues[3].toInt()
+      val supported = when (major) {
+        22 -> minor > 23 || (minor == 23 && patch >= 4)
+        24 -> minor > 22 || (minor == 22 && patch >= 1)
+        26 -> minor > 12 || (minor == 12 && patch >= 1)
+        else -> major > 26
+      }
+      if (!supported) throw IllegalStateException("Node $output does not satisfy REA's engine requirement")
       mapOf(
         "version" to output,
         "exitCode" to child.exitValue(),
