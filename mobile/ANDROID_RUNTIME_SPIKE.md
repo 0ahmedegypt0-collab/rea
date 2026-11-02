@@ -1,6 +1,6 @@
 # Android Node runtime feasibility spike
 
-**Status: investigation only — no embedded Node runtime has been built or packaged yet.**  
+**Status: Android/Bionic Node 24 candidate built and ELF-checked; execution inside the REA APK is not yet verified.**  
 **Review date:** 2026-11-02  
 **Initial ABI:** `arm64-v8a`
 
@@ -66,3 +66,18 @@ The repository now contains `.github/workflows/android-node-runtime.yml` and `sc
 The workflow checks out Termux package recipes at commit `d4e5b905c5582a33cd77922a9b7bb4f05b80104c`, changes the Termux app ID in the build properties to the REA Android application ID `tools.rea.mobile`, and invokes the official Termux package-builder container to build `nodejs-lts` plus its Bionic dependencies for `aarch64`. The package outputs are unpacked into the exact app-private prefix `/data/data/tools.rea.mobile/files/usr`, then the Node ELF header, Android linker interpreter, dynamic dependencies and old default Termux prefix references are checked. The workflow uploads the runtime archive and inspection evidence.
 
 This workflow is a **candidate-build stage**, not proof of runtime execution inside the APK. The next required stage is to place the archive in an Android test host, extract it under the REA app's actual private files directory, launch Node under the REA application UID/SELinux domain, and run the REA CLI/MCP smoke tests. The runtime is not wired into the current Expo UI until that Android process test passes.
+
+
+## Verified Node 24 candidate (2026-11-02)
+
+GitHub Actions run [41370698556](https://github.com/0ahmedegypt0-collab/rea/actions/runs/41370698556) completed successfully and uploaded artifact [rea-node24-android-arm64-candidate](https://github.com/0ahmedegypt0-collab/rea/actions/runs/41370698556/artifacts/13114328191).
+
+Verified evidence from the downloaded artifact:
+
+- Node package: `nodejs-lts_24.22.2_aarch64.deb`; this satisfies REA's Node engine requirement.
+- ELF: 64-bit little-endian AArch64 executable, Android linker interpreter `/system/bin/linker64`.
+- RUNPATH: `/data/data/tools.rea.mobile/files/usr/lib`; no public Termux package prefix was found in the Node binary.
+- All non-system `DT_NEEDED` libraries are present in the app-specific prefix: zlib, c-ares, SQLite, OpenSSL, ICU and libc++.
+- Runtime archive SHA-256: `059e083117bbf97f61737dc2ff40230fc02209fdfd868bfee1adba5eb1c6891b`.
+
+This proves the candidate was built and its static ELF/package layout passed the workflow checks. It does **not** prove the binary can execute from the REA app sandbox, that every shared library loads on-device, or that the complete REA engine/tools work. Those remain emulator/physical-device acceptance gates.
