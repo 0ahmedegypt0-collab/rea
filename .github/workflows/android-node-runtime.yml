@@ -1,0 +1,85 @@
+name: Build app-private Android Node runtime
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/android/**"
+      - "mobile/ANDROID_RUNTIME_SPIKE.md"
+      - ".github/workflows/android-node-runtime.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-node-runtime-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-node-arm64:
+    name: Build Node 24 for REA app sandbox (arm64-v8a)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      TERMUX_BUILDER_IMAGE_NAME: ghcr.io/termux/package-builder:latest
+      HUSKY: "0"
+    steps:
+      - name: Checkout REA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Install host ELF inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils dpkg-dev
+
+      - name: Checkout pinned Termux package recipes
+        env:
+          TERMUX_PACKAGES_COMMIT: d4e5b905c5582a33cd77922a9b7bb4f05b80104c
+        run: |
+          git init termux-packages
+          git -C termux-packages remote add origin https://github.com/termux/termux-packages.git
+          git -C termux-packages fetch --depth=1 origin "$TERMUX_PACKAGES_COMMIT"
+          git -C termux-packages checkout --detach FETCH_HEAD
+          test "$(git -C termux-packages rev-parse HEAD)" = "$TERMUX_PACKAGES_COMMIT"
+
+      - name: Rebuild package prefix for this Android application ID
+        run: |
+          cd termux-packages
+          sed -i 's/^TERMUX_APP__PACKAGE_NAME="com.termux"$/TERMUX_APP__PACKAGE_NAME="tools.rea.mobile"/' scripts/properties.sh
+          grep -Fx 'TERMUX_APP__PACKAGE_NAME="tools.rea.mobile"' scripts/properties.sh
+          if grep -Fx 'TERMUX_APP__PACKAGE_NAME="com.termux"' scripts/properties.sh; then
+            echo "Default Termux package ID was not replaced" >&2
+            exit 1
+          fi
+
+      - name: Record and pull pinned builder image digest
+        run: |
+          docker pull "$TERMUX_BUILDER_IMAGE_NAME"
+          docker image inspect "$TERMUX_BUILDER_IMAGE_NAME" --format '{{index .RepoDigests 0}}' | tee termux-builder-image.txt
+
+      - name: Build Node.js LTS and its Bionic runtime dependencies
+        run: |
+          cd termux-packages
+          rm -rf output
+          ./scripts/run-docker.sh ./build-package.sh -C -a aarch64 -j2 nodejs-lts
+
+      - name: Assemble and inspect app-private runtime prefix
+        run: |
+          bash scripts/android/package-termux-runtime.sh \
+            "$GITHUB_WORKSPACE/termux-packages/output" \
+            "$GITHUB_WORKSPACE/mobile/android/runtime"
+          cp termux-builder-image.txt mobile/android/runtime/
+
+      - name: Upload Node runtime candidate and build evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rea-node24-android-arm64-candidate
+          path: |
+            mobile/android/runtime/node-runtime-arm64.tar.gz
+            mobile/android/runtime/node-runtime-arm64.sha256
+            mobile/android/runtime/node-runtime-packages.txt
+            mobile/android/runtime/node.dynamic.txt
+            mobile/android/runtime/node.elf.txt
+            mobile/android/runtime/termux-builder-image.txt
+          if-no-files-found: error
+          retention-days: 14
