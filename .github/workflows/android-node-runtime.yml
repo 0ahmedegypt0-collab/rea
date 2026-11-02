@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: android-node-runtime-${{ github.ref }}
-  cancel-in-progress: true
+  # Native Node builds are long-running; never cancel a valid build because a newer commit arrives.
+  cancel-in-progress: false
 
 jobs:
   build-node-arm64:
