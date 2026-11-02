@@ -162,3 +162,29 @@ jobs:
             adb shell run-as tools.rea.mobile test -x files/usr/bin/aapt2
             adb shell run-as tools.rea.mobile test -x files/usr/bin/adb
             adb shell run-as tools.rea.mobile test -x files/usr/bin/python
+            adb shell run-as tools.rea.mobile sh -c '
+              set -e
+              PREFIX=/data/data/tools.rea.mobile/files/usr
+              export PREFIX TERMUX_PREFIX="$PREFIX"
+              export HOME=/data/data/tools.rea.mobile/files/home
+              export TMPDIR=/data/data/tools.rea.mobile/files/tmp
+              export PATH="$PREFIX/bin:/system/bin:/system/xbin"
+              export LD_LIBRARY_PATH="$PREFIX/lib"
+              export LD_PRELOAD="$PREFIX/lib/libtermux-exec-ld-preload.so"
+              export JAVA_HOME="$PREFIX/lib/jvm/java-21-openjdk"
+              mkdir -p "$HOME" "$TMPDIR"
+              "$PREFIX/bin/bash" --version >/dev/null
+              "$PREFIX/bin/python" --version >/dev/null
+              "$PREFIX/bin/git" --version >/dev/null
+              "$PREFIX/bin/jq" --version >/dev/null
+              "$PREFIX/bin/readelf" --version >/dev/null
+              "$PREFIX/bin/adb" version >/dev/null
+              "$PREFIX/bin/jadx" --version >/dev/null
+              "$PREFIX/bin/apktool" --version >/dev/null
+              "$PREFIX/bin/apksigner" version >/dev/null
+              "$PREFIX/bin/aapt2" version >/dev/null
+              "$PREFIX/bin/binwalk" --version >/dev/null
+              "$PREFIX/bin/gdb" --version >/dev/null
+              "$PREFIX/bin/rizin" -v >/dev/null
+              "$PREFIX/bin/radare2" -v >/dev/null
+            '
