@@ -86,6 +86,7 @@ jobs:
           cp "${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.sha256" "${{ runner.temp }}/rea-termux/android-assets/"
           cp "${{ runner.temp }}/rea-termux/engine-artifact/android-engine-manifest.json" "${{ runner.temp }}/rea-termux/android-assets/"
           cp "${{ runner.temp }}/rea-termux/engine-artifact/native-addons.txt" "${{ runner.temp }}/rea-termux/android-assets/"
+          cp "${{ runner.temp }}/rea-termux/engine-artifact/native-addons-excluded.txt" "${{ runner.temp }}/rea-termux/android-assets/"
           (cd "${{ runner.temp }}/rea-termux/android-assets" && sha256sum --check rea-runtime-arm64.sha256 && sha256sum --check rea-engine-js.sha256)
 
       - name: Upload combined Android engine assets
@@ -107,5 +108,6 @@ jobs:
             ${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.sha256
             ${{ runner.temp }}/rea-termux/engine-artifact/android-engine-manifest.json
             ${{ runner.temp }}/rea-termux/engine-artifact/native-addons.txt
+            ${{ runner.temp }}/rea-termux/engine-artifact/native-addons-excluded.txt
           if-no-files-found: error
           retention-days: 14
