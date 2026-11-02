@@ -2,6 +2,7 @@ package expo.modules.rearuntime
 
 import android.system.Os
 import android.system.OsConstants
+import android.util.Log
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -316,6 +317,7 @@ class ReaRuntimeModule : Module() {
     val response = try {
       mcpRequestInternal("initialize", params)
     } catch (cause: Exception) {
+      Log.e("REA_RUNTIME", "MCP_START_FAILED", cause)
       stopMcpInternal()
       throw IllegalStateException("Could not initialize the local REA MCP process: " + cause.message, cause)
     }
@@ -323,6 +325,7 @@ class ReaRuntimeModule : Module() {
       ?: throw IllegalStateException("REA MCP initialize response did not contain a result")
     mcpNotificationInternal("notifications/initialized", JSONObject())
     mcpInitializeResult = result.toString()
+    Log.i("REA_RUNTIME", "MCP_INITIALIZED")
     mcpInitializeResult!!
   }
 
@@ -339,6 +342,7 @@ class ReaRuntimeModule : Module() {
       for (index in 0 until batch.length()) allTools.put(batch.get(index))
       cursor = if (result.has("nextCursor") && !result.isNull("nextCursor")) result.getString("nextCursor").takeIf { it.isNotBlank() } else null
     } while (cursor != null)
+    Log.i("REA_RUNTIME", "MCP_READY toolCount=${allTools.length()}")
     JSONObject().put("tools", allTools).toString()
   }
 
@@ -514,6 +518,7 @@ class ReaRuntimeModule : Module() {
         else -> major > 26
       }
       if (!supported) throw IllegalStateException("Node $output does not satisfy REA's engine requirement")
+      Log.i("REA_RUNTIME", "NODE_READY version=$output arch=$arch")
       mapOf(
         "version" to output,
         "exitCode" to child.exitValue(),
