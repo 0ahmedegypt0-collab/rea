@@ -356,6 +356,7 @@ class ReaRuntimeModule : Module() {
     val params = JSONObject().put("name", name).put("arguments", arguments)
     val result = mcpRequestInternal("tools/call", params).optJSONObject("result")
       ?: throw IllegalStateException("REA MCP tools/call response did not contain a result")
+    Log.i("REA_RUNTIME", "MCP_TOOL_CALL_READY name=" + name)
     result.toString()
   }
 
