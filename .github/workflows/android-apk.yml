@@ -81,6 +81,7 @@ jobs:
           cp "${{ runner.temp }}/rea-runtime/rea-engine-js.sha256" mobile/android/app/src/main/assets/rea-engine-js.sha256
           cp "${{ runner.temp }}/rea-runtime/android-engine-manifest.json" mobile/android/app/src/main/assets/android-engine-manifest.json
           cp "${{ runner.temp }}/rea-runtime/native-addons.txt" mobile/android/app/src/main/assets/native-addons.txt
+          cp "${{ runner.temp }}/rea-runtime/native-addons-excluded.txt" mobile/android/app/src/main/assets/native-addons-excluded.txt
           (cd mobile/android/app/src/main/assets && sha256sum --check rea-runtime-arm64.sha256 && sha256sum --check rea-engine-js.sha256)
 
       - name: Build installable debug APK
