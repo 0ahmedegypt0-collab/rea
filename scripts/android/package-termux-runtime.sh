@@ -50,7 +50,7 @@ while IFS= read -r needed; do
       fi
       ;;
   esac
-done < <(sed -n 's/.*Shared library: \\[([^]]*\\)\\].*/\\1/p' "$stage/node.dynamic.txt")
+done < <(awk -F'[][]' '/Shared library:/ { print $2 }' "$stage/node.dynamic.txt")
 
 mkdir -p "$OUTPUT_DIR"
 rm -f "$OUTPUT_DIR/node-runtime-arm64.tar.gz" "$OUTPUT_DIR/node-runtime-arm64.sha256" "$OUTPUT_DIR/node-runtime-packages.txt" "$OUTPUT_DIR/node-runtime-deb-checksums.txt"
