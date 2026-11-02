@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator, SafeAreaView, ScrollView, StatusBar, StyleSheet,
-  Text, TouchableOpacity, View,
+  Text, TextInput, TouchableOpacity, View,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Directory, File, Paths } from "expo-file-system";
@@ -12,6 +12,7 @@ const COLORS = {
   text: "#F4F1E8", muted: "#A5B0C2", green: "#62C995", red: "#F07878", line: "#2B3A51",
 };
 type ImportedTarget = { name: string; uri: string; size: number };
+type McpTool = { name: string; description?: string; inputSchema?: Record<string, unknown> };
 const workspace = new Directory(Paths.document, "rea-workspace", "targets");
 
 function formatBytes(bytes: number): string {
@@ -26,6 +27,12 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("مساحة العمل المحلية جاهزة");
   const [engineStatus, setEngineStatus] = useState("جارٍ فحص محرك Android المحلي...");
+  const [tools, setTools] = useState<McpTool[]>([]);
+  const [selectedTool, setSelectedTool] = useState<McpTool | null>(null);
+  const [toolSearch, setToolSearch] = useState("");
+  const [toolArguments, setToolArguments] = useState("{}");
+  const [toolResult, setToolResult] = useState("");
+  const [toolBusy, setToolBusy] = useState(false);
   const [error, setError] = useState("");
 
   const refreshWorkspace = useCallback(() => {
@@ -63,7 +70,12 @@ export default function App() {
         const runtime = await ReaRuntime.runVersion();
         if (active && current.engineAvailable) {
           const catalog = JSON.parse(await ReaRuntime.readCatalog());
-          setEngineStatus("محرك REA يعمل محليًا على " + runtime.version + " — " + catalog.tools.length + " أداة");
+          await ReaRuntime.startMcp();
+          const listing = JSON.parse(await ReaRuntime.listTools()) as { tools: McpTool[] };
+          if (!active) return;
+          setTools(listing.tools ?? []);
+          setSelectedTool(listing.tools?.[0] ?? null);
+          setEngineStatus("محرك REA يعمل محليًا على " + runtime.version + " — " + (listing.tools?.length ?? catalog.tools.length) + " أداة");
         } else if (active) {
           setEngineStatus("محرك Node يعمل محليًا، وحزمة REA لم تُضمّن بعد");
         }
@@ -75,6 +87,22 @@ export default function App() {
       });
     return () => { active = false; };
   }, [refreshWorkspace]);
+
+
+  async function executeTool() {
+    if (!selectedTool) return;
+    setToolBusy(true);
+    setToolResult("");
+    try {
+      const parsed = JSON.parse(toolArguments);
+      const result = await ReaRuntime.callTool(selectedTool.name, JSON.stringify(parsed));
+      setToolResult(JSON.stringify(JSON.parse(result), null, 2));
+    } catch (cause) {
+      setToolResult(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setToolBusy(false);
+    }
+  }
 
   async function importTargets() {
     setBusy(true);
