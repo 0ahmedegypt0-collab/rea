@@ -33,6 +33,10 @@ prefix="$STAGE_DIR/data/data/$APP_ID/files/usr"
   echo "The WebAssembly analysis toolchain is incomplete" >&2
   exit 1
 }
+[[ -x "$prefix/bin/strace" && -x "$prefix/bin/ltrace" && -x "$prefix/bin/yara" && -x "$prefix/bin/mmls" && -x "$prefix/bin/fls" && -x "$prefix/bin/icat" && -x "$prefix/bin/fsstat" && -x "$prefix/bin/tsk_recover" ]] || {
+  echo "The tracing, malware-signature, or disk-forensics tools are incomplete" >&2
+  exit 1
+}
 [[ -x "$prefix/bin/grep" && -x "$prefix/bin/sed" && -x "$prefix/bin/find" ]] || {
   echo "The base shell/text utilities are incomplete" >&2
   exit 1
@@ -56,7 +60,7 @@ cat > "$OUTPUT_DIR/toolchain-manifest.json" <<EOF
   "applicationId": "$APP_ID",
   "architecture": "arm64-v8a",
   "prefix": "/data/data/$APP_ID/files/usr",
-  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt2", "d8", "r8", "binwalk", "gdb", "rizin", "radare2", "wasmtime", "wasm-objdump", "wasm2wat", "wat2wasm", "wasm-validate"],
+  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt2", "d8", "r8", "binwalk", "gdb", "rizin", "radare2", "wasmtime", "wasm-objdump", "wasm2wat", "wat2wasm", "wasm-validate", "strace", "ltrace", "yara", "mmls", "fls", "icat", "fsstat", "tsk_recover"],
   "packageCount": ${#packages[@]}
 }
 EOF
