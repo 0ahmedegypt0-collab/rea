@@ -44,3 +44,16 @@ A standalone REA APK must not depend on `/data/data/com.termux/files/usr`, the T
 **Do not integrate `nodejs-mobile-react-native` based on its Node 18 runtime**, and do not copy Termux's installed Node binary into the APK as-is. Continue with a pinned Android/Bionic Node build and an app-owned prefix. If that prefix cannot be made robust, switch to a custom Android NDK Node build (including a JNI/libnode embedding only after proving the full Node API and worker/process requirements).
 
 This spike does not mark any capability group as Native or Ported. The existing 66-group matrix remains the source of truth, and every capability still requires real Android execution evidence.
+
+## Important refinement: app-specific Termux package builds
+
+The Termux build system explicitly supports changing `TERMUX_APP__PACKAGE_NAME`, `TERMUX_APP__DATA_DIR` and `TERMUX__PREFIX` when forking its package build configuration for another Android application. The documented default prefix is `/data/data/com.termux/files/usr`; the package name and data directory determine the private prefix. Termux also explicitly warns that packages built for one app package name cannot be mixed with packages built for another.
+
+This gives REA a much stronger candidate than copying the public Termux binary: build the required Termux packages from source with REA's Android application ID (`tools.rea.mobile`) and an REA-owned private prefix, then package only the required runtime files into the REA APK. Official prebuilt Termux packages must **not** be reused unchanged for this custom prefix.
+
+The remaining proof is to pin a Termux packages commit, override its build properties reproducibly, build Node and every required dependency for that custom app ID, inspect all embedded paths/ELF dependencies, and launch it from the REA process. The package-build documentation states that custom app IDs require rebuilding packages rather than mixing in the official repository binaries.
+
+Sources:
+- [Termux package build configuration](https://github.com/termux/termux-packages/wiki/Building-packages)
+- [Termux build properties and app data/prefix variables](https://github.com/termux/termux-packages/blob/master/scripts/properties.sh)
+- [Termux private prefix layout](https://github.com/termux/termux-packages/wiki/Termux-file-system-layout)
