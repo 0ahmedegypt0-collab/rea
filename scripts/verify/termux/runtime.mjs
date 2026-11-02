@@ -11,7 +11,7 @@ import { createServer } from "node:http";
 import { Worker } from "node:worker_threads";
 
 const packageJson = JSON.parse(
-  await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+  await readFile(new URL("../../../package.json", import.meta.url), "utf8"),
 );
 const version = process.versions.node;
 const [major, minor, patch] = version.split(".").map(Number);
