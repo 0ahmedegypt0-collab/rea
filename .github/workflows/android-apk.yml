@@ -138,7 +138,7 @@ jobs:
                 ready=true
                 break
               fi
-              if grep -q "MCP_START_FAILED" <<<"$logs"; then
+              if grep -Eq "MCP_START_FAILED|NODE_START_FAILED|NODE_VERSION_FAILED|NODE_VERSION_TIMEOUT" <<<"$logs"; then
                 printf '%s\n' "$logs"
                 exit 1
               fi
