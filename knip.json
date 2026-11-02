@@ -12,6 +12,8 @@
     "src/contracts/errorSchemas.ts",
     "scripts/verify/fridaBindingsCompatibility.ts",
     "scripts/verify/termux/browser.mjs",
+    "scripts/verify/termux/mcp-stdio.mjs",
+    "scripts/verify/termux/runtime.mjs",
     "scripts/verify-real-ghidra-noreturn.mjs",
     "scripts/verify-real-ghidra-decompiler-failure.mjs",
     "scripts/verify-real-ghidra-decompile-timeout.mjs",
