@@ -86,12 +86,17 @@ try {
     params: {},
   }) + "\n");
 
-  const listed = await request("tools/list", {});
-  if (listed.error) throw new Error(JSON.stringify(listed.error));
-  const tools = listed.result?.tools;
-  if (!Array.isArray(tools) || tools.length === 0) {
-    throw new Error("The local REA MCP process returned no tools");
-  }
+  const tools = [];
+  let cursor;
+  do {
+    const listed = await request("tools/list", cursor ? { cursor } : {});
+    if (listed.error) throw new Error(JSON.stringify(listed.error));
+    const page = listed.result?.tools;
+    if (!Array.isArray(page)) throw new Error("The local REA MCP process returned an invalid tools page");
+    tools.push(...page);
+    cursor = listed.result?.nextCursor ?? undefined;
+  } while (cursor);
+  if (tools.length === 0) throw new Error("The local REA MCP process returned no tools");
   const names = tools.map((tool) => tool.name);
   if (new Set(names).size !== names.length) {
     throw new Error("The local REA MCP process returned duplicate tool names");
