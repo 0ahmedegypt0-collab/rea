@@ -75,9 +75,9 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         run: |
           mkdir -p mobile/android/app/src/main/assets
-          cp "${{ runner.temp }}/rea-runtime/node-runtime-arm64.tar.gz" mobile/android/app/src/main/assets/rea-runtime-arm64.tar.gz
-          cp "${{ runner.temp }}/rea-runtime/node-runtime-arm64.sha256" mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
-          sha256sum --check mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
+          cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.tar.gz" mobile/android/app/src/main/assets/rea-runtime-arm64.tar.gz
+          cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.sha256" mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
+          (cd mobile/android/app/src/main/assets && sha256sum --check rea-runtime-arm64.sha256)
 
       - name: Build installable debug APK
         working-directory: mobile/android
