@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "scripts/android/**"
+      - "scripts/verify/termux/**"
       - ".github/workflows/android-node-runtime.yml"
 
 permissions:
