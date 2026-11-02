@@ -59,6 +59,9 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
 
+      - name: Ensure Expo SDK 54 native module autolinking
+        run: node scripts/android/ensure-expo-settings.mjs mobile/android/settings.gradle
+
       - name: Download verified standalone runtime and engine assets
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
