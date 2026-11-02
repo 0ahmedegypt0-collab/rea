@@ -10,6 +10,7 @@ This matrix is an engineering register, not a claim that every capability alread
 
 - REA is a Node.js MCP server/CLI. Its root package requires Node.js 22.23.4+, 24.22.1+, or 26.12.1+.
 - The repository has a dedicated `build:termux` compilation path (`compile:termux`) and a real-Termux emulator workflow.
+- The current Termux `nodejs-lts` package recipe reports Node 24.22.2, which satisfies REA's declared Node 24 range (>=24.22.1). The `nodejs-mobile-react-native` package currently documents a Node 18.20.4 runtime, which does **not** satisfy REA's Node engine requirement; it is not a drop-in embedding solution.
 - The Termux verification installs Android's Termux Node.js LTS and Chromium packages, builds REA inside the Android app sandbox, runs `rea mcp doctor`, and exercises a real Chromium browser capture.
 - The real-Termux workflow is manually dispatched. Its existence is evidence of a supported Android/Termux route, not proof that all REA providers run on Android or that the current Expo APK contains the engine.
 - The current `mobile/` project is only a remote MCP client prototype. It asks for an HTTP endpoint and therefore does **not** meet the standalone-app requirement. It is not the final architecture.
@@ -97,7 +98,7 @@ The source-of-truth capability declarations currently contain 66 groups. No grou
 ## Required application architecture
 
 1. **One installed application.** Replace the remote-endpoint prototype with an Android-native host and an embedded engine. No LAN IP or separately running MCP server in the normal flow.
-2. **Embedded runtime.** Package a pinned Android/Bionic Node runtime for each shipped ABI (initial target: arm64-v8a), the compiled REA runtime, production dependencies, generated tool catalog, and required data files. Validate Node's actual version against the repository engine range.
+2. **Embedded runtime.** Package a pinned Android/Bionic Node runtime for each shipped ABI (initial target: arm64-v8a), the compiled REA runtime, production dependencies, generated tool catalog, and required data files. The first runtime candidate is a privately embedded Termux-compatible userland built from pinned Termux packages, not a dependency on the installed Termux app. The React Native Node.js Mobile plugin is currently based on Node 18.20.4 and is below REA's minimum; do not integrate it unless a newer compatible runtime is independently verified. Validate Node's actual version against the repository engine range.
 3. **Native process adapter.** Replace desktop process-group/job assumptions with Android process ownership, cancellation, bounded output capture, cleanup, and app lifecycle handling. Never shell out to an assumed Windows executable.
 4. **Provider adapters.** Every external provider must declare Android ABI support, bundled/runtime dependency, permission needs, license, readiness probe, and tested operations.
 5. **Private workspace.** Use app-private storage for APK imports, extracted workspaces, temporary files, evidence, and logs. Integrate Android's Storage Access Framework for user-selected files; do not request broad storage access without need.
