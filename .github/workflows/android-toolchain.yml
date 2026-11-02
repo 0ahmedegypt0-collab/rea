@@ -106,6 +106,7 @@ jobs:
           tar -xzf "mobile/android/toolchain/rea-tools-arm64.tar.gz" -C "$stage"
           test -x "$stage/usr/bin/node"
           test -x "$stage/usr/bin/bash"
+          test -x "$stage/usr/bin/sh"
           test -x "$stage/usr/bin/python"
           test -x "$stage/usr/bin/adb"
           while IFS='|' read -r link target; do
