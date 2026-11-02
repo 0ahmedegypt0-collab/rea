@@ -46,8 +46,13 @@ export default function App() {
     ReaRuntime.inspect()
       .then(async (inspection) => {
         if (!active) return;
-        if (!inspection.available) {
-          setEngineStatus("محرك Node 24 لم يُضمّن في هذه النسخة بعد");
+        if (!inspection.available && inspection.bundledAssetPresent) {
+          setEngineStatus("جارٍ تثبيت محرك Node 24 المضمّن...");
+          await ReaRuntime.installBundledRuntime();
+        }
+        const current = await ReaRuntime.inspect();
+        if (!current.available) {
+          setEngineStatus("محرك Node 24 غير مضمّن في هذه النسخة بعد");
           return;
         }
         const runtime = await ReaRuntime.runVersion();
