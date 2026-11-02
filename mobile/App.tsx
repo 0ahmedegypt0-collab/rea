@@ -154,10 +154,10 @@ export default function App() {
 
         <View style={styles.card}>
           <View style={styles.statusRow}><View style={styles.pendingDot} /><Text style={styles.sectionTitle}>حالة محرك التحليل</Text></View>
-          <Text style={styles.pendingTitle}>دمج المحرك المحلي قيد التنفيذ</Text>
+          <Text style={styles.pendingTitle}>تشغيل محرك REA المحلي</Text>
           <Text style={styles.bodyText}>
-            واجهة الاتصال بخادم خارجي أُخرجت من مسار التطبيق. يجري تجهيز Runtime متوافق مع Android
-            ثم ربط أدوات REA الأصلية به. لن نعرض أداة على أنها تعمل قبل اختبارها فعليًا على Android.
+            التطبيق يجهّز Node 24 ومحرك REA وكتالوج الأدوات داخل مساحة Android الخاصة به.
+            أدوات التحليل تُعرض من الكتالوج الأصلي، وتظل إمكانات كل أداة مرتبطة بتوافقها واختبارها على Android.
           </Text>
           <Text style={styles.hint}>{engineStatus}</Text>
           <Text style={styles.hint}>{status}</Text>
@@ -221,6 +221,7 @@ export default function App() {
           {selectedTool && (
             <>
               <Text style={styles.selectedTool}>الأداة المحددة: {selectedTool.name}</Text>
+              {!!selectedTool.inputSchema && <Text selectable style={styles.schemaText}>{JSON.stringify(selectedTool.inputSchema, null, 2)}</Text>}
               <TextInput
                 value={toolArguments}
                 onChangeText={setToolArguments}
@@ -251,9 +252,9 @@ export default function App() {
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>خطة التوافق</Text>
-          <View style={styles.planRow}><Text style={styles.planState}>قيد العمل</Text><Text style={styles.planText}>تضمين Node.js ومحرك REA داخل التطبيق</Text></View>
-          <View style={styles.planRow}><Text style={styles.planState}>التالي</Text><Text style={styles.planText}>توصيل كتالوج الأدوات ومخططات الإدخال</Text></View>
-          <View style={styles.planRow}><Text style={styles.planState}>بعده</Text><Text style={styles.planText}>نقل محركات التحليل واختبار كل مجموعة</Text></View>
+          <View style={styles.planRow}><Text style={styles.planState}>تم</Text><Text style={styles.planText}>إلغاء الاعتماد على IP والخوادم الخارجية</Text></View>
+          <View style={styles.planRow}><Text style={styles.planState}>قيد العمل</Text><Text style={styles.planText}>تضمين Node 24 ومحرك REA وكتالوج الأدوات</Text></View>
+          <View style={styles.planRow}><Text style={styles.planState}>التالي</Text><Text style={styles.planText}>تكييف الأدوات حسب Android واختبار كل مجموعة</Text></View>
         </View>
         <Text style={styles.footer}>ملفاتك محفوظة داخل مساحة التطبيق الخاصة · لا يوجد اتصال بخادم خارجي</Text>
       </ScrollView>
@@ -306,6 +307,7 @@ const styles = StyleSheet.create({
   toolName: { color: COLORS.gold, fontSize: 12, fontWeight: "800", textAlign: "left" },
   toolDescription: { color: COLORS.muted, fontSize: 10, lineHeight: 16, textAlign: "left" },
   selectedTool: { color: COLORS.text, fontSize: 12, fontWeight: "800", textAlign: "left" },
+  schemaText: { color: COLORS.muted, backgroundColor: "#0A1321", borderRadius: 8, padding: 10, fontSize: 9, lineHeight: 14, fontFamily: "monospace", textAlign: "left" },
   jsonInput: { minHeight: 110, maxHeight: 220, backgroundColor: "#070C14", borderColor: COLORS.line, borderWidth: 1, borderRadius: 10, color: COLORS.text, padding: 12, fontFamily: "monospace", textAlignVertical: "top" },
   toolResult: { color: "#D7E3F4", backgroundColor: "#070C14", borderRadius: 10, padding: 12, fontSize: 10, lineHeight: 16, fontFamily: "monospace", textAlign: "left" },
   stopButton: { borderColor: COLORS.red, borderWidth: 1, borderRadius: 10, padding: 10, alignItems: "center" },
