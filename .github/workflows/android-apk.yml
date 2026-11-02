@@ -130,7 +130,7 @@ jobs:
             ready=false
             for attempt in $(seq 1 450); do
               logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
-              if grep -q "MCP_READY toolCount=" <<<"$logs"; then
+              if grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"; then
                 ready=true
                 break
               fi
@@ -144,7 +144,7 @@ jobs:
             printf '%s\\n' "$logs"
             test "$ready" = true
             grep -q "NODE_READY" <<<"$logs"
-            grep -q "MCP_READY toolCount=" <<<"$logs"
+            grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"
             adb shell run-as tools.rea.mobile test -x files/usr/bin/node
             adb shell run-as tools.rea.mobile test -f files/rea-engine/scripts/rea.mjs
             adb shell run-as tools.rea.mobile test -x files/usr/bin/jadx
@@ -152,3 +152,8 @@ jobs:
             adb shell run-as tools.rea.mobile test -x files/usr/bin/rizin
             adb shell run-as tools.rea.mobile test -x files/usr/bin/radare2
             adb shell run-as tools.rea.mobile test -x files/usr/bin/gdb
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/binwalk
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/apksigner
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/aapt2
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/adb
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/python
