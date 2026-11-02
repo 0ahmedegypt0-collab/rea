@@ -195,6 +195,13 @@ export default function App() {
           <Text style={styles.bodyText}>
             الأدوات تأتي من كتالوج REA الأصلي وتُنفّذ عبر محرك محلي داخل التطبيق، دون عنوان IP أو خادم خارجي.
           </Text>
+          <TouchableOpacity
+            style={styles.stopButton}
+            onPress={() => ReaRuntime.cancelMcp().then(() => setEngineStatus("تم إيقاف/إلغاء محرك MCP المحلي"))}
+          >
+            <Text style={styles.stopText}>إيقاف أو إلغاء التحليل</Text>
+          </TouchableOpacity>
+
           <TextInput
             value={toolSearch}
             onChangeText={setToolSearch}
@@ -241,12 +248,6 @@ export default function App() {
                 {toolBusy ? <ActivityIndicator color={COLORS.bg} /> : <Text style={styles.primaryText}>تنفيذ الأداة محليًا</Text>}
               </TouchableOpacity>
               {!!toolResult && <Text selectable style={styles.toolResult}>{toolResult}</Text>}
-              <TouchableOpacity
-                style={styles.stopButton}
-                onPress={() => ReaRuntime.cancelMcp().then(() => setEngineStatus("تم إيقاف/إلغاء محرك MCP المحلي"))}
-              >
-                <Text style={styles.stopText}>إيقاف محرك MCP</Text>
-              </TouchableOpacity>
             </>
           )}
         </View>
