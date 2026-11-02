@@ -26,7 +26,7 @@ class ReaRuntimeModule : Module() {
   private val engineChecksumName = "rea-engine-js.sha256"
   private val mcpLock = Any()
   private val mcpErrors = ArrayDeque<String>()
-  private var mcpProcess: Process? = null
+  @Volatile private var mcpProcess: Process? = null
   private var mcpReader: BufferedReader? = null
   private var mcpWriter: BufferedWriter? = null
   private var mcpRequestId = 0
@@ -445,6 +445,15 @@ class ReaRuntimeModule : Module() {
 
     AsyncFunction("stopMcp") {
       synchronized(mcpLock) { stopMcpInternal() }
+      true
+    }
+
+    AsyncFunction("cancelMcp") {
+      val process = mcpProcess
+      if (process != null && process.isAlive) {
+        process.destroy()
+        if (!process.waitFor(2, TimeUnit.SECONDS)) process.destroyForcibly()
+      }
       true
     }
 
