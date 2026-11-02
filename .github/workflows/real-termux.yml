@@ -3,7 +3,7 @@ name: Real Termux browser verification
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Build app-private Android Node runtime"]
+    workflows: ["Build app-private Android toolchain"]
     types: [completed]
 
 concurrency:
@@ -70,7 +70,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         uses: actions/download-artifact@v4
         with:
-          name: rea-node24-android-arm64-candidate
+          name: rea-android-runtime-arm64-candidate
           path: ${{ runner.temp }}/rea-termux/node-runtime
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
