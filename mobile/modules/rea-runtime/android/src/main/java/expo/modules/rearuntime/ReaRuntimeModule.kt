@@ -497,13 +497,20 @@ class ReaRuntimeModule : Module() {
         if (termuxExec.isFile) put("LD_PRELOAD", termuxExec.absolutePath)
       }
 
-      val child = process.start()
+      val child = try {
+        process.start()
+      } catch (cause: Exception) {
+        Log.e("REA_RUNTIME", "NODE_START_FAILED", cause)
+        throw cause
+      }
       if (!child.waitFor(20, TimeUnit.SECONDS)) {
         child.destroyForcibly()
+        Log.e("REA_RUNTIME", "NODE_VERSION_TIMEOUT")
         throw IllegalStateException("Embedded Node did not exit within 20 seconds")
       }
       val output = child.inputStream.bufferedReader().use { it.readText() }.trim()
       if (child.exitValue() != 0) {
+        Log.e("REA_RUNTIME", "NODE_VERSION_FAILED exit=${child.exitValue()} output=$output")
         throw IllegalStateException("Embedded Node failed (exit ${child.exitValue()}): $output")
       }
       val match = Regex("^v(\\d+)\\.(\\d+)\\.(\\d+)$").matchEntire(output)
