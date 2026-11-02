@@ -191,7 +191,7 @@ class ReaRuntimeModule : Module() {
       removeRecursively(staging)
     }
 
-    mapOf(
+    return mapOf(
       "installed" to true,
       "sha256" to actual,
       "directory" to destination.absolutePath,
