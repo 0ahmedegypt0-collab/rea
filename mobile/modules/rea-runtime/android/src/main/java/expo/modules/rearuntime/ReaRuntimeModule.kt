@@ -1,6 +1,7 @@
 package expo.modules.rearuntime
 
 import android.system.Os
+import android.system.OsConstants
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -39,8 +40,14 @@ class ReaRuntimeModule : Module() {
     return digest.digest().joinToString("") { "%02x".format(it) }
   }
 
+  private fun isSymbolicLink(file: File): Boolean = try {
+    (Os.lstat(file.absolutePath).st_mode and OsConstants.S_IFMT) == OsConstants.S_IFLNK
+  } catch (_: Exception) {
+    false
+  }
+
   private fun removeRecursively(file: File) {
-    if (file.isDirectory && !android.system.OsConstants.S_ISLNK(Os.lstat(file.absolutePath).st_mode)) {
+    if (file.isDirectory && !isSymbolicLink(file)) {
       file.listFiles()?.forEach { removeRecursively(it) }
     }
     file.delete()
@@ -71,7 +78,7 @@ class ReaRuntimeModule : Module() {
           entry.isDirectory -> output.mkdirs()
           entry.isSymbolicLink -> {
             output.parentFile?.mkdirs()
-            if (output.exists() || Os.lstatOrNull(output.absolutePath) != null) output.delete()
+            if (output.exists() || isSymbolicLink(output)) output.delete()
             val linkTarget = entry.linkName
             if (linkTarget.startsWith("/") && !linkTarget.startsWith("/data/data/${appId}/files/usr")) {
               throw IllegalStateException("Unexpected absolute symlink in runtime archive: $linkTarget")
