@@ -51,6 +51,10 @@ jobs:
             exit 1
           fi
 
+      - name: Free disk space for the Android native build
+        working-directory: termux-packages
+        run: ./scripts/free-space.sh
+
       - name: Record and pull pinned builder image digest
         run: |
           docker pull "$TERMUX_BUILDER_IMAGE_NAME"
