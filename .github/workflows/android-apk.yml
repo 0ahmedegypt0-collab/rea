@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "mobile/**"
+      - "scripts/android/ensure-expo-settings.mjs"
       - ".github/workflows/android-apk.yml"
   workflow_run:
     workflows: ["Real Termux browser verification"]
