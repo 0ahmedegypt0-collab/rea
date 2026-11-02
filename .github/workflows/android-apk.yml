@@ -6,6 +6,9 @@ on:
     paths:
       - "mobile/**"
       - ".github/workflows/android-apk.yml"
+  workflow_run:
+    workflows: ["Build app-private Android Node runtime"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -51,6 +54,24 @@ jobs:
       - name: Generate native Android project
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
+
+      - name: Download verified Node runtime candidate
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: rea-node24-android-arm64-candidate
+          path: ${{ runner.temp }}/rea-runtime
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Bundle app-private Node runtime assets
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          mkdir -p mobile/android/app/src/main/assets
+          cp "${{ runner.temp }}/rea-runtime/node-runtime-arm64.tar.gz" mobile/android/app/src/main/assets/rea-runtime-arm64.tar.gz
+          cp "${{ runner.temp }}/rea-runtime/node-runtime-arm64.sha256" mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
+          sha256sum --check mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
 
       - name: Build installable debug APK
         working-directory: mobile/android
