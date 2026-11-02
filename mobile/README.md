@@ -1,41 +1,44 @@
-# REA Mobile
+# REA Android application
 
-An Android-first React Native client for the **original REA MCP engine**. This is not a replacement or mock implementation of REA: it connects to the real REA HTTP transport and reads the live tool catalog with `tools/list`, then invokes selected original tools with `tools/call`.
+## Product requirement
 
-## Current state
+The target is a **standalone Android application**. The normal app must start its own REA engine from files packaged inside the APK (or app-managed, locally installed engine packs). It must not ask the user for a server IP, connect to a separate computer, open a website, or require a separately installed Termux app.
 
-- Android application shell with Arabic RTL-oriented UI.
-- Connects to REA's Streamable HTTP MCP endpoint (`/mcp`).
-- Initializes an MCP session, retrieves the complete advertised tool catalog, and invokes tools using their original JSON input contracts.
-- Displays the actual tool response, including structured content when returned.
-- Search/filter over the live catalog.
+The complete REA tool catalog must remain present. A Windows/macOS/Linux provider is not to be deleted because it is not Android-compatible: it must be ported, replaced with a functionally equivalent Android implementation where possible, or retained with an explicit platform restriction and its original contract.
 
-## Important architecture constraint
+See [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md) for the 66-group inventory, technical plan, platform boundaries and acceptance criteria.
 
-The REA repository is a Node.js 22+ MCP server and CLI. The Android app is the native mobile client; the analysis engine remains the original REA process. Start REA in HTTP mode in a trusted environment:
+## Honest current state
 
-```bash
-npx rea-agents@latest mcp --http --host 0.0.0.0 --port 3000 --allowed-hosts <PHONE_OR_LAN_HOST>
-```
+**This directory is not yet the standalone product and no APK is declared ready.**
 
-Then enter the reachable endpoint in the app, for example `http://192.168.1.20:3000/mcp`. The exact allowed host configuration must match the Host/Origin checks described in the root `docs/mcp-contracts.md`.
+The current Expo/React Native files are an early MCP-over-HTTP prototype. That prototype asks for an external endpoint and does not embed the REA engine. It therefore does not satisfy the product requirement and must not be treated as the final architecture.
 
-**Security:** REA's current HTTP transport is plain HTTP without authentication or TLS. Do not expose it to the public internet. Use a private trusted network or a properly secured tunnel/gateway. Do not put credentials or sensitive target data on an untrusted connection.
+The upstream engine is a Node.js 22+ MCP server/CLI. The repository already has a dedicated `build:termux` path and a real-Termux emulator workflow. That workflow installs Android's Termux Node.js LTS and Chromium packages, builds REA inside the Android app sandbox, runs the engine doctor, and exercises browser capture. This is useful Android evidence, but it does not prove that all 66 capability groups run on Android or that the current mobile prototype embeds the runtime.
 
-## Run the Android app
+## Required implementation
 
-Requires Node.js/npm and Android build tooling or Expo Go for development.
+The final app must own:
 
-```bash
-cd mobile
-npm install
-npx expo start
-```
+- An Android-compatible Node runtime and the compiled REA engine.
+- The original generated tool catalog and production JS dependencies.
+- Android-native process launch, cancellation, bounded logs and cleanup.
+- App-private target/workspace/evidence storage and Android's Storage Access Framework file picker.
+- Schema-driven forms for the original tool contracts.
+- Provider readiness and capability status for every tool.
+- Android ports or bundled engines for providers that can legally and technically run on Android.
 
-Scan the Expo QR code with Expo Go, or use an Android emulator. For the Android emulator, `10.0.2.2` maps to the host computer's localhost.
+The initial ABI target is `arm64-v8a`. Additional ABIs must be built and tested before being advertised.
 
-## Capability boundaries
+## Runtime and provider policy
 
-The app exposes the original REA tool catalog; a tool only succeeds when its required target, provider, permissions and host software are available to the REA engine. Some REA workflows depend on external desktop tools such as Ghidra, Hopper, IDA, JADX, Frida, or platform-specific bridges. A phone UI cannot make those host dependencies run natively on Android by itself. Those capabilities must be provided by a compatible REA host or separately validated Android/Termux support. Unsupported tools must report their real REA diagnostic rather than pretend to have completed analysis.
+- Do not use a remote MCP endpoint as the normal app runtime.
+- Do not enable cleartext traffic as a workaround.
+- Do not claim that a desktop executable can run on Android without a tested Android/Bionic build.
+- Do not remove tools from the catalog. Use the explicit states Native, Ported, Bundled engine, Device bridge, Restricted, or Not assessed.
+- Keep upstream and third-party license notices with redistributed components.
+- A provider is marked working only after a real Android-device test.
 
-The next mobile milestones are guided target import, schema-driven forms for tool inputs, progress/cancellation, evidence browsing/export, provider readiness/doctor screens, and secure authenticated transport.
+## Build status
+
+The existing GitHub Actions workflow under `.github/workflows/android-apk.yml` builds the early Expo prototype. It is not yet a validated standalone REA build. The APK release gate will be replaced by the standalone engine/device tests described in [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md).
