@@ -1,6 +1,6 @@
 name: Build app-private Android toolchain
 
-'on':
+"on":
   workflow_run:
     workflows: ["Build app-private Android Node runtime"]
     types: [completed]
