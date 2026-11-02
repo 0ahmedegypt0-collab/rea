@@ -289,7 +289,7 @@ function registerRetainedRuntimeEvidence(
       new Set(["Runtime.enable", "Debugger.enable"]),
     );
     const direct = await observeDirectly(inspector);
-    expect(direct.ok).toBe(true);
+    expect(direct.ok, JSON.stringify(direct)).toBe(true);
     if (direct.ok) expect(evidenceId).toBe(direct.value.evidence_id);
   });
 }
