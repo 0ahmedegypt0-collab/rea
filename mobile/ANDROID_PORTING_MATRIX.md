@@ -133,7 +133,8 @@ The source-of-truth capability declarations currently contain 66 groups. No grou
 - A reproducible workflow now rebuilds Termux Node.js LTS and its Bionic dependencies for the exact Android application ID `tools.rea.mobile`, using pinned Termux recipes and arm64-v8a.
 - The runtime workflow produces a candidate archive only after ELF architecture/interpreter checks and prefix checks. The archive still needs to be executed from an installed REA APK before Stage A can be marked complete.
 - The app-private toolchain build is configured to include Android builds of
-  JADX/APKTool, ADB, GDB, Rizin/Radare2, Binwalk, Python/JDK, WABT, and
-  Wasmtime. These remain Not assessed until the merged prefix is installed
+  JADX/APKTool, ADB, GDB, Rizin/Radare2, Binwalk, YARA, Sleuth Kit, strace,
+  ltrace, Python/JDK, WABT, and Wasmtime. These remain Not assessed until the
+  merged prefix is installed
   and each engine is exercised from the APK.
 - All 66 capability groups remain Not assessed until real Android operation tests pass.
