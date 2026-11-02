@@ -274,7 +274,7 @@ class ReaRuntimeModule : Module() {
     val prefix = runtimePrefix()
     val node = File(prefix, "bin/node")
     val engine = engineDirectory()
-    val workspace = File(files, "Documents/rea-workspace").apply { mkdirs() }
+    val workspace = workspaceDirectory()
     val entry = File(engine, "scripts/rea.mjs")
     if (!node.isFile || !node.canExecute()) {
       throw IllegalStateException("The embedded Android Node runtime is not installed")
