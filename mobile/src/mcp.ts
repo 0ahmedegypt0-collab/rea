@@ -22,7 +22,9 @@ export class ReaMcpClient {
   }
 
   async listTools(): Promise<McpTool[]> {
-    const response = JSON.parse(await ReaRuntime.listTools()) as { tools?: McpTool[] };
+    const response = JSON.parse(await ReaRuntime.listTools()) as {
+      tools?: McpTool[];
+    };
     return response.tools ?? [];
   }
 
@@ -30,7 +32,9 @@ export class ReaMcpClient {
     name: string,
     args: Record<string, unknown>,
   ): Promise<McpReply> {
-    const result = JSON.parse(await ReaRuntime.callTool(name, JSON.stringify(args)));
+    const result = JSON.parse(
+      await ReaRuntime.callTool(name, JSON.stringify(args)),
+    );
     return { result };
   }
 
