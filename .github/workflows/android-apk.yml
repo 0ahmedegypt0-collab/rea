@@ -1,4 +1,4 @@
-name: Build REA Android workspace shell (prototype)
+name: Build REA Android APK
 
 on:
   workflow_dispatch:
@@ -61,7 +61,7 @@ jobs:
         working-directory: mobile
         run: npx expo prebuild --platform android --no-install
 
-      - name: Download verified Node runtime candidate
+      - name: Download verified standalone runtime and engine assets
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         uses: actions/download-artifact@v4
         with:
@@ -71,7 +71,7 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Bundle app-private Node runtime assets
+      - name: Bundle app-private runtime and toolchain assets
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         run: |
           mkdir -p mobile/android/app/src/main/assets
@@ -94,7 +94,61 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: rea-android-workspace-shell-debug-apk
+          name: ${{ github.event_name == 'workflow_run' && 'rea-android-standalone-debug-apk' || 'rea-android-workspace-shell-debug-apk' }}
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+  arm64-runtime-smoke:
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+    needs: android-debug-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Download standalone APK
+        uses: actions/download-artifact@v4
+        with:
+          name: rea-android-standalone-debug-apk
+          path: dist
+
+      - name: Install and launch on an ARM64 Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: arm64-v8a
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -camera-back none -camera-front none
+          script: |
+            set -euo pipefail
+            apk="$(find dist -type f -name '*.apk' | head -n 1)"
+            test -n "$apk"
+            adb install "$apk"
+            adb logcat -c
+            adb shell monkey -p tools.rea.mobile 1
+            ready=false
+            for attempt in $(seq 1 450); do
+              logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
+              if grep -q "MCP_READY toolCount=" <<<"$logs"; then
+                ready=true
+                break
+              fi
+              if grep -q "MCP_START_FAILED" <<<"$logs"; then
+                printf '%s\\n' "$logs"
+                exit 1
+              fi
+              sleep 2
+            done
+            logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
+            printf '%s\\n' "$logs"
+            test "$ready" = true
+            grep -q "NODE_READY" <<<"$logs"
+            grep -q "MCP_READY toolCount=" <<<"$logs"
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/node
+            adb shell run-as tools.rea.mobile test -f files/rea-engine/scripts/rea.mjs
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/jadx
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/apktool
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/rizin
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/radare2
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/gdb
