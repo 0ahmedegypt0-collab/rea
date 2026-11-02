@@ -405,6 +405,10 @@ class ReaRuntimeModule : Module() {
     }
 
     AsyncFunction("installBundledRuntime") {
+      val arch = System.getProperty("os.arch").lowercase()
+      if (arch != "aarch64" && arch != "arm64") {
+        throw IllegalStateException("The bundled REA runtime currently requires a 64-bit ARM Android device")
+      }
       installArchive(
         runtimeArchiveName,
         runtimeChecksumName,
@@ -464,6 +468,10 @@ class ReaRuntimeModule : Module() {
 
     AsyncFunction("runVersion") {
       val contextFiles = appFilesDirectory()
+      val arch = System.getProperty("os.arch").lowercase()
+      if (arch != "aarch64" && arch != "arm64") {
+        throw IllegalStateException("The bundled REA runtime currently requires a 64-bit ARM Android device")
+      }
       val prefix = runtimePrefix()
       val node = File(prefix, "bin/node")
       if (!node.isFile || !node.canExecute()) {
