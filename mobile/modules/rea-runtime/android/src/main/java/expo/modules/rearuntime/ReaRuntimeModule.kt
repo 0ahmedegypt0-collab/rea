@@ -485,6 +485,7 @@ class ReaRuntimeModule : Module() {
         .redirectErrorStream(true)
       process.environment().apply {
         put("PREFIX", prefix.absolutePath)
+        put("TERMUX_PREFIX", prefix.absolutePath)
         put("HOME", home.absolutePath)
         put("TMPDIR", temp.absolutePath)
         put("PATH", "${File(prefix, "bin").absolutePath}:/system/bin:/system/xbin")
