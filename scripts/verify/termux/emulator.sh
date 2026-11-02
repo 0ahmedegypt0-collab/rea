@@ -65,3 +65,8 @@ done
 adb exec-out cat "$app_home/rea-ci/run.log"
 status=$(adb shell cat "$app_home/rea-ci/status" | tr -d '\r')
 [[ "$status" == 0 ]]
+mkdir -p "$staging/engine-artifact"
+adb pull "$app_home/rea-ci/engine-artifact/rea-engine-js.tar.gz" "$staging/engine-artifact/"
+adb pull "$app_home/rea-ci/engine-artifact/rea-engine-js.sha256" "$staging/engine-artifact/"
+adb pull "$app_home/rea-ci/engine-artifact/android-engine-manifest.json" "$staging/engine-artifact/"
+adb pull "$app_home/rea-ci/engine-artifact/native-addons.txt" "$staging/engine-artifact/"
