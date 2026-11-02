@@ -204,6 +204,7 @@ class ReaRuntimeModule : Module() {
     val config = File(files, "config").apply { mkdirs() }
     val cache = File(files, "cache").apply { mkdirs() }
     val state = File(files, "state").apply { mkdirs() }
+    val javaHome = File(prefix, "lib/jvm/java-21-openjdk")
     val environment = mutableMapOf(
       "PREFIX" to prefix.absolutePath,
       "TERMUX_PREFIX" to prefix.absolutePath,
@@ -217,6 +218,7 @@ class ReaRuntimeModule : Module() {
       "REA_MCP_INPUT_SCHEMA_PROFILE" to "full",
       "REA_MCP_OUTPUT_SCHEMA_PROFILE" to "full",
     )
+    if (javaHome.isDirectory) environment["JAVA_HOME"] = javaHome.absolutePath
     val termuxExec = File(prefix, "lib/libtermux-exec-ld-preload.so")
     if (termuxExec.isFile) environment["LD_PRELOAD"] = termuxExec.absolutePath
     return environment
