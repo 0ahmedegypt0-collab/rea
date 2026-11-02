@@ -123,7 +123,7 @@ jobs:
           heap-size: 512M
           disk-size: 8192M
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -camera-back none -camera-front none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           script: |
             set -euo pipefail
             apk="$(find dist -type f -name '*.apk' | head -n 1)"
