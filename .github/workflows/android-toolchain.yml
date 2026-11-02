@@ -1,6 +1,13 @@
 name: Build app-private Android toolchain
 
 "on":
+  workflow_dispatch:
+    inputs:
+      node_run_id:
+        description: "Successful Node runtime workflow run ID"
+        required: true
+        default: "41438714010"
+        type: string
   workflow_run:
     workflows: ["Build app-private Android Node runtime"]
     types: [completed]
@@ -15,8 +22,8 @@ concurrency:
 
 jobs:
   build-tools-and-merge-runtime:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
       - name: Checkout REA
@@ -51,7 +58,7 @@ jobs:
           path: ${{ runner.temp }}/rea-node-runtime
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.node_run_id || github.event.workflow_run.id }}
 
       - name: Read the exact Termux builder image digest
         id: builder
