@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "REA Mobile",
+    "slug": "rea-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "tools.rea.mobile",
+      "usesCleartextTraffic": true
+    }
+  }
+}
