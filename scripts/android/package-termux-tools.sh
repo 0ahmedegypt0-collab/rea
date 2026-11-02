@@ -25,7 +25,7 @@ prefix="$STAGE_DIR/data/data/$APP_ID/files/usr"
 [[ -x "$prefix/bin/adb" ]] || { echo "Missing app-private adb" >&2; exit 1; }
 [[ -x "$prefix/bin/jq" ]] || { echo "Missing app-private jq" >&2; exit 1; }
 [[ -x "$prefix/bin/readelf" ]] || { echo "Missing app-private readelf" >&2; exit 1; }
-[[ -x "$prefix/bin/java" && -x "$prefix/bin/jadx" && -x "$prefix/bin/apktool" && -x "$prefix/bin/binwalk" && -x "$prefix/bin/apksigner" && -x "$prefix/bin/aapt2" && -x "$prefix/bin/d8" && -x "$prefix/bin/r8" && -x "$prefix/bin/gdb" && -x "$prefix/bin/rizin" && -x "$prefix/bin/radare2" ]] || {
+[[ -x "$prefix/bin/java" && -x "$prefix/bin/jadx" && -x "$prefix/bin/apktool" && -x "$prefix/bin/binwalk" && -x "$prefix/bin/apksigner" && -x "$prefix/bin/aapt" && -x "$prefix/bin/d8" && -x "$prefix/bin/r8" && -x "$prefix/bin/gdb" && -x "$prefix/bin/rizin" && -x "$prefix/bin/radare2" ]] || {
   echo "The Android Java/DEX/firmware toolchain is incomplete" >&2
   exit 1
 }
@@ -56,7 +56,7 @@ cat > "$OUTPUT_DIR/toolchain-manifest.json" <<EOF
   "applicationId": "$APP_ID",
   "architecture": "arm64-v8a",
   "prefix": "/data/data/$APP_ID/files/usr",
-  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt2", "d8", "r8", "binwalk", "gdb", "rizin", "radare2", "wasmtime", "wasm-objdump", "wasm2wat", "wat2wasm", "wasm-validate", "strace", "ltrace", "yara", "mmls", "fls", "icat", "fsstat", "tsk_recover"],
+  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt", "d8", "r8", "binwalk", "gdb", "rizin", "radare2", "wasmtime", "wasm-objdump", "wasm2wat", "wat2wasm", "wasm-validate", "strace", "ltrace", "yara", "mmls", "fls", "icat", "fsstat", "tsk_recover"],
   "packageCount": ${#packages[@]}
 }
 EOF
