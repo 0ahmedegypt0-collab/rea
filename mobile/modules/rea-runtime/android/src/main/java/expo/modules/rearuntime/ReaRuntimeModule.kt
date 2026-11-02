@@ -212,7 +212,7 @@ class ReaRuntimeModule : Module() {
       "XDG_CONFIG_HOME" to config.absolutePath,
       "XDG_CACHE_HOME" to cache.absolutePath,
       "XDG_STATE_HOME" to state.absolutePath,
-      "PATH" to "\${File(prefix, "bin").absolutePath}:/system/bin:/system/xbin",
+      "PATH" to (File(prefix, "bin").absolutePath + ":/system/bin:/system/xbin"),
       "LD_LIBRARY_PATH" to File(prefix, "lib").absolutePath,
       "REA_MCP_INPUT_SCHEMA_PROFILE" to "full",
       "REA_MCP_OUTPUT_SCHEMA_PROFILE" to "full",
