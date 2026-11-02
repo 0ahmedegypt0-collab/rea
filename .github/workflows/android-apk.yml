@@ -150,6 +150,7 @@ jobs:
             grep -q "NODE_READY" <<<"$logs"
             grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"
             grep -q "MCP_TOOL_CALL_READY name=inspect_analysis_settings" <<<"$logs"
+            adb shell run-as tools.rea.mobile test -f files/usr/lib/libtermux-exec-ld-preload.so
             adb shell run-as tools.rea.mobile test -x files/usr/bin/node
             adb shell run-as tools.rea.mobile test -f files/rea-engine/scripts/rea.mjs
             adb shell run-as tools.rea.mobile test -x files/usr/bin/jadx
