@@ -24,6 +24,10 @@ type ReaRuntimeNativeModule = {
   installBundledRuntime(): Promise<{ installed: boolean; sha256: string; directory: string }>;
   installBundledEngine(): Promise<{ installed: boolean; sha256: string; directory: string }>;
   readCatalog(): Promise<string>;
+  startMcp(): Promise<string>;
+  listTools(): Promise<string>;
+  callTool(name: string, argumentsJson: string): Promise<string>;
+  stopMcp(): Promise<boolean>;
 };
 
 export default requireNativeModule<ReaRuntimeNativeModule>("ReaRuntime");
