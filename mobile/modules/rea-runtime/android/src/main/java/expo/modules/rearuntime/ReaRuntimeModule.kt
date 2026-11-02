@@ -247,7 +247,7 @@ class ReaRuntimeModule : Module() {
       }
       if (message.opt("id")?.toString() == id.toString()) {
         if (message.has("error")) {
-          throw IllegalStateException("REA MCP request failed: \${message.optJSONObject("error")}")
+          throw IllegalStateException("REA MCP request failed: " + message.optJSONObject("error"))
         }
         return message
       }
@@ -317,7 +317,7 @@ class ReaRuntimeModule : Module() {
       mcpRequestInternal("initialize", params)
     } catch (cause: Exception) {
       stopMcpInternal()
-      throw IllegalStateException("Could not initialize the local REA MCP process: \${cause.message}", cause)
+      throw IllegalStateException("Could not initialize the local REA MCP process: " + cause.message, cause)
     }
     val result = response.optJSONObject("result")
       ?: throw IllegalStateException("REA MCP initialize response did not contain a result")
