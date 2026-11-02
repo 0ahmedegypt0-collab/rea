@@ -80,13 +80,26 @@ class ReaRuntimeModule : Module() {
             output.parentFile?.mkdirs()
             if (output.exists() || isSymbolicLink(output)) output.delete()
             val linkTarget = entry.linkName
-            if (linkTarget.startsWith("/") && !linkTarget.startsWith("/data/data/${appId}/files/usr")) {
-              throw IllegalStateException("Unexpected absolute symlink in runtime archive: $linkTarget")
+            val resolvedLink = if (linkTarget.startsWith("/")) {
+              File(linkTarget).canonicalPath
+            } else {
+              File(output.parentFile, linkTarget).canonicalPath
+            }
+            val allowedLinkRoot = if (linkTarget.startsWith("/")) {
+              runtimePrefix().canonicalPath
+            } else {
+              stagingPrefix.canonicalPath
+            }
+            if (resolvedLink != allowedLinkRoot && !resolvedLink.startsWith(allowedLinkRoot + File.separator)) {
+              throw IllegalStateException("Runtime symlink escaped its private prefix: $linkTarget")
             }
             Os.symlink(linkTarget, output.absolutePath)
           }
           entry.isLink -> {
             output.parentFile?.mkdirs()
+            if (entry.linkName.startsWith("/")) {
+              throw IllegalStateException("Absolute hard links are not supported in the runtime archive")
+            }
             val source = File(staging, entry.linkName).canonicalFile
             if (source.path != stagingRoot.path && !source.path.startsWith(stagingRoot.path + File.separator)) {
               throw IllegalStateException("Runtime hard link escaped staging directory")
