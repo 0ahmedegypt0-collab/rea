@@ -1,5 +1,5 @@
-import { writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 
 const target = resolve(process.argv[2] ?? "mobile/android/settings.gradle");
 const template = `pluginManagement {
@@ -41,4 +41,16 @@ include(":app")
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
 `;
 await writeFile(target, template, "utf8");
-console.log("Expo SDK 54 Gradle autolinking configured.");
+
+const gradlePropertiesPath = resolve(dirname(target), "gradle.properties");
+let gradleProperties = await readFile(gradlePropertiesPath, "utf8");
+if (/^reactNativeArchitectures=/m.test(gradleProperties)) {
+  gradleProperties = gradleProperties.replace(
+    /^reactNativeArchitectures=.*$/m,
+    "reactNativeArchitectures=arm64-v8a",
+  );
+} else {
+  gradleProperties += "\\nreactNativeArchitectures=arm64-v8a\\n";
+}
+await writeFile(gradlePropertiesPath, gradleProperties, "utf8");
+console.log("Expo autolinking configured; Android ABI restricted to arm64-v8a.");
