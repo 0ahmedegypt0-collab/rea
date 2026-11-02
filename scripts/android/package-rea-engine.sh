@@ -37,7 +37,7 @@ tar -xzf "$OUTPUT_DIR/$packed_name" -C "$OUTPUT_DIR/staging"
 # Keep the exact production dependency tree installed by Android's own Node.
 cp -a node_modules "$OUTPUT_DIR/staging/package/node_modules"
 
-find "$OUTPUT_DIR/staging/package/node_modules" -type f -name '*.node' -print \
+find "$OUTPUT_DIR/staging/package" -type f -name '*.node' -print \
   | sed "s#^$OUTPUT_DIR/staging/package/##" \
   > "$OUTPUT_DIR/native-addons.txt"
 
