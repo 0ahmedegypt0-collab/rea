@@ -12,7 +12,7 @@ See [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md) for the 66-group in
 
 **This directory is not yet the standalone product and no APK is declared ready.**
 
-The current Expo/React Native files are an early MCP-over-HTTP prototype. That prototype asks for an external endpoint and does not embed the REA engine. It therefore does not satisfy the product requirement and must not be treated as the final architecture.
+The first Expo/React Native screen is now a local-only workspace: it imports selected files through Android's document picker and copies them into app-private storage. It no longer asks for an MCP endpoint or enables cleartext HTTP. This is a real local-file foundation, not yet the embedded REA engine; analysis tools are not advertised as working until the engine and providers are packaged and device-tested.
 
 The upstream engine is a Node.js 22+ MCP server/CLI. The repository already has a dedicated `build:termux` path and a real-Termux emulator workflow. That workflow installs Android's Termux Node.js LTS and Chromium packages, builds REA inside the Android app sandbox, runs the engine doctor, and exercises browser capture. This is useful Android evidence, but it does not prove that all 66 capability groups run on Android or that the current mobile prototype embeds the runtime.
 
@@ -41,4 +41,4 @@ The initial ABI target is `arm64-v8a`. Additional ABIs must be built and tested 
 
 ## Build status
 
-The existing GitHub Actions workflow under `.github/workflows/android-apk.yml` builds the early Expo prototype. It is not yet a validated standalone REA build. The APK release gate will be replaced by the standalone engine/device tests described in [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md).
+The existing GitHub Actions workflow under `.github/workflows/android-apk.yml` builds the current Expo workspace shell. It is not yet a validated standalone REA build. The Termux emulator workflow now also runs an Android Node runtime smoke test for the REA Node version range, filesystem access, child-process execution, worker threads, crypto and localhost HTTP. The APK release gate will be replaced by the standalone engine/device tests described in [ANDROID_PORTING_MATRIX.md](./ANDROID_PORTING_MATRIX.md).
