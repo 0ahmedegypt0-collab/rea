@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Checkout pinned Termux package recipes
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: termux/termux-packages
           ref: d4e5b905c5582a33cd77922a9b7bb4f05b80104c
@@ -61,7 +61,20 @@ jobs:
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
       - name: Pull the exact builder image used for Node
-        run: docker pull "${{ steps.builder.outputs.image }}"
+        shell: bash
+        run: |
+          image="${{ steps.builder.outputs.image }}"
+          for attempt in 1 2 3; do
+            if docker pull "$image"; then
+              exit 0
+            fi
+            echo "Pinned GHCR layer download failed (attempt $attempt/3); clearing incomplete image data before retry" >&2
+            docker image rm "$image" >/dev/null 2>&1 || true
+            docker system prune --force --all >/dev/null 2>&1 || true
+            sleep $((attempt * 10))
+          done
+          echo "Unable to pull the pinned Termux builder image after three attempts" >&2
+          exit 1
 
       - name: Build Android userland tools and Python runtime
         working-directory: termux-packages
