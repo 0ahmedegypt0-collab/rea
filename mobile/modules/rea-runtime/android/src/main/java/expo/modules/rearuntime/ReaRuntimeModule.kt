@@ -7,10 +7,16 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.BufferedInputStream
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.MessageDigest
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class ReaRuntimeModule : Module() {
@@ -18,6 +24,13 @@ class ReaRuntimeModule : Module() {
   private val runtimeChecksumName = "rea-runtime-arm64.sha256"
   private val engineArchiveName = "rea-engine-js.tar.gz"
   private val engineChecksumName = "rea-engine-js.sha256"
+  private val mcpLock = Any()
+  private val mcpErrors = ArrayDeque<String>()
+  private var mcpProcess: Process? = null
+  private var mcpReader: BufferedReader? = null
+  private var mcpWriter: BufferedWriter? = null
+  private var mcpRequestId = 0
+  private var mcpInitializeResult: String? = null
 
   private fun appFilesDirectory(): File {
     val context = appContext.reactContext
@@ -185,6 +198,180 @@ class ReaRuntimeModule : Module() {
     )
   }
 
+  private fun mcpEnvironment(prefix: File, files: File): MutableMap<String, String> {
+    val home = File(files, "home").apply { mkdirs() }
+    val temp = File(files, "tmp").apply { mkdirs() }
+    val config = File(files, "config").apply { mkdirs() }
+    val cache = File(files, "cache").apply { mkdirs() }
+    val state = File(files, "state").apply { mkdirs() }
+    return mutableMapOf(
+      "PREFIX" to prefix.absolutePath,
+      "TERMUX_PREFIX" to prefix.absolutePath,
+      "HOME" to home.absolutePath,
+      "TMPDIR" to temp.absolutePath,
+      "XDG_CONFIG_HOME" to config.absolutePath,
+      "XDG_CACHE_HOME" to cache.absolutePath,
+      "XDG_STATE_HOME" to state.absolutePath,
+      "PATH" to "\${File(prefix, "bin").absolutePath}:/system/bin:/system/xbin",
+      "LD_LIBRARY_PATH" to File(prefix, "lib").absolutePath,
+      "REA_MCP_INPUT_SCHEMA_PROFILE" to "full",
+      "REA_MCP_OUTPUT_SCHEMA_PROFILE" to "full",
+    )
+  }
+
+  private fun mcpRequestInternal(method: String, params: JSONObject): JSONObject {
+    val writer = mcpWriter ?: throw IllegalStateException("REA MCP process is not running")
+    val reader = mcpReader ?: throw IllegalStateException("REA MCP process is not running")
+    val id = ++mcpRequestId
+    val request = JSONObject()
+      .put("jsonrpc", "2.0")
+      .put("id", id)
+      .put("method", method)
+      .put("params", params)
+    writer.write(request.toString())
+    writer.newLine()
+    writer.flush()
+
+    while (true) {
+      val line = reader.readLine()
+        ?: throw IllegalStateException("REA MCP process closed its output stream: \${mcpErrors.joinToString("\n")}")
+      if (line.isBlank()) continue
+      val message = try {
+        JSONObject(line)
+      } catch (_: Exception) {
+        continue
+      }
+      if (message.opt("id")?.toString() == id.toString()) {
+        if (message.has("error")) {
+          throw IllegalStateException("REA MCP request failed: \${message.optJSONObject("error")}")
+        }
+        return message
+      }
+    }
+  }
+
+  private fun mcpNotificationInternal(method: String, params: JSONObject) {
+    val writer = mcpWriter ?: throw IllegalStateException("REA MCP process is not running")
+    val notification = JSONObject()
+      .put("jsonrpc", "2.0")
+      .put("method", method)
+      .put("params", params)
+    writer.write(notification.toString())
+    writer.newLine()
+    writer.flush()
+  }
+
+  private fun startMcpInternal(): String = synchronized(mcpLock) {
+    val current = mcpProcess
+    if (current != null && current.isAlive) {
+      return@synchronized mcpInitializeResult ?: JSONObject().put("ready", true).toString()
+    }
+
+    stopMcpInternal()
+    val files = appFilesDirectory()
+    val prefix = runtimePrefix()
+    val node = File(prefix, "bin/node")
+    val engine = engineDirectory()
+    val entry = File(engine, "scripts/rea.mjs")
+    if (!node.isFile || !node.canExecute()) {
+      throw IllegalStateException("The embedded Android Node runtime is not installed")
+    }
+    if (!entry.isFile) throw IllegalStateException("The compiled REA engine is not installed")
+
+    val child = ProcessBuilder(node.absolutePath, entry.absolutePath, "mcp")
+      .directory(engine)
+      .redirectErrorStream(false)
+    child.environment().putAll(mcpEnvironment(prefix, files))
+    val process = child.start()
+    mcpProcess = process
+    mcpReader = BufferedReader(InputStreamReader(process.inputStream, Charsets.UTF_8))
+    mcpWriter = BufferedWriter(OutputStreamWriter(process.outputStream, Charsets.UTF_8))
+    synchronized(mcpErrors) { mcpErrors.clear() }
+    Thread({
+      try {
+        process.errorStream.bufferedReader().useLines { lines ->
+          lines.forEach { line ->
+            synchronized(mcpErrors) {
+              if (mcpErrors.size >= 40) mcpErrors.removeFirst()
+              mcpErrors.addLast(line.take(1000))
+            }
+          }
+        }
+      } catch (_: Exception) {
+      }
+    }, "rea-mcp-stderr").apply {
+      isDaemon = true
+      start()
+    }
+
+    val params = JSONObject()
+      .put("protocolVersion", "2025-03-26")
+      .put("capabilities", JSONObject())
+      .put("clientInfo", JSONObject().put("name", "rea-android").put("version", "1.0.0"))
+    val response = try {
+      mcpRequestInternal("initialize", params)
+    } catch (cause: Exception) {
+      stopMcpInternal()
+      throw IllegalStateException("Could not initialize the local REA MCP process: \${cause.message}", cause)
+    }
+    val result = response.optJSONObject("result")
+      ?: throw IllegalStateException("REA MCP initialize response did not contain a result")
+    mcpNotificationInternal("notifications/initialized", JSONObject())
+    mcpInitializeResult = result.toString()
+    mcpInitializeResult!!
+  }
+
+  private fun listMcpToolsInternal(): String = synchronized(mcpLock) {
+    if (mcpProcess?.isAlive != true) startMcpInternal()
+    val allTools = JSONArray()
+    var cursor: String? = null
+    do {
+      val params = JSONObject()
+      if (cursor != null) params.put("cursor", cursor)
+      val result = mcpRequestInternal("tools/list", params).optJSONObject("result")
+        ?: throw IllegalStateException("REA MCP tools/list response did not contain a result")
+      val batch = result.optJSONArray("tools") ?: JSONArray()
+      for (index in 0 until batch.length()) allTools.put(batch.get(index))
+      cursor = result.optString("nextCursor").takeIf { it.isNotBlank() }
+    } while (cursor != null)
+    JSONObject().put("tools", allTools).toString()
+  }
+
+  private fun callMcpToolInternal(name: String, argumentsJson: String): String = synchronized(mcpLock) {
+    if (mcpProcess?.isAlive != true) startMcpInternal()
+    val arguments = try {
+      JSONObject(argumentsJson)
+    } catch (cause: Exception) {
+      throw IllegalArgumentException("Tool arguments must be a JSON object", cause)
+    }
+    val params = JSONObject().put("name", name).put("arguments", arguments)
+    val result = mcpRequestInternal("tools/call", params).optJSONObject("result")
+      ?: throw IllegalStateException("REA MCP tools/call response did not contain a result")
+    result.toString()
+  }
+
+  private fun stopMcpInternal() {
+    try {
+      mcpWriter?.close()
+    } catch (_: Exception) {
+    }
+    val process = mcpProcess
+    if (process != null) {
+      try {
+        if (!process.waitFor(2, TimeUnit.SECONDS)) {
+          process.destroy()
+          if (!process.waitFor(2, TimeUnit.SECONDS)) process.destroyForcibly()
+        }
+      } catch (_: Exception) {
+        process.destroyForcibly()
+      }
+    }
+    mcpProcess = null
+    mcpReader = null
+    mcpWriter = null
+    mcpInitializeResult = null
+  }
+
   override fun definition() = ModuleDefinition {
     Name("ReaRuntime")
 
@@ -237,6 +424,23 @@ class ReaRuntimeModule : Module() {
       val catalog = File(engineDirectory(), "dist/mcp-catalog-full.json")
       if (!catalog.isFile) throw IllegalStateException("The full REA MCP tool catalog is not installed")
       catalog.readText()
+    }
+
+    AsyncFunction("startMcp") {
+      startMcpInternal()
+    }
+
+    AsyncFunction("listTools") {
+      listMcpToolsInternal()
+    }
+
+    AsyncFunction("callTool") { name: String, argumentsJson: String ->
+      callMcpToolInternal(name, argumentsJson)
+    }
+
+    AsyncFunction("stopMcp") {
+      synchronized(mcpLock) { stopMcpInternal() }
+      true
     }
 
     AsyncFunction("runVersion") {
