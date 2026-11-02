@@ -135,13 +135,13 @@ jobs:
                 break
               fi
               if grep -q "MCP_START_FAILED" <<<"$logs"; then
-                printf '%s\\n' "$logs"
+                printf '%s\n' "$logs"
                 exit 1
               fi
               sleep 2
             done
             logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
-            printf '%s\\n' "$logs"
+            printf '%s\n' "$logs"
             test "$ready" = true
             grep -q "NODE_READY" <<<"$logs"
             grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"
