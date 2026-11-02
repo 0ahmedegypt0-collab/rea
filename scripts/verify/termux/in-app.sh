@@ -52,14 +52,15 @@ if find "$engine_filter/package" -type f -exec grep -I -n "/data/data/com.termux
 fi
 : > "$report/engine-artifact/native-addons-excluded.txt"
 while IFS= read -r -d '' file; do
+  machine=""
   if readelf -h "$file" >/dev/null 2>&1; then
     machine="$(readelf -h "$file" | awk -F: '/Machine:/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }')"
-    if [[ "$machine" != "AArch64" ]]; then
-      printf '%s\n' "${file#"$engine_filter/package/"}" >> "$report/engine-artifact/native-addons-excluded.txt"
-      rm -f "$file"
-    fi
   fi
-done < <(find "$engine_filter/package/node_modules" -type f -print0)
+  if [[ "$machine" != "AArch64" ]]; then
+    printf '%s\n' "${file#"$engine_filter/package/"}" >> "$report/engine-artifact/native-addons-excluded.txt"
+    rm -f "$file"
+  fi
+done < <(find "$engine_filter/package" -type f -name '*.node' -print0)
 find "$engine_filter/package/node_modules" -type l ! -exec test -e {} \; -delete
 node --input-type=module - "$engine_filter/package/android-engine-manifest.json" "$report/engine-artifact/native-addons-excluded.txt" <<'NODE'
 import { readFileSync, writeFileSync } from "node:fs";
