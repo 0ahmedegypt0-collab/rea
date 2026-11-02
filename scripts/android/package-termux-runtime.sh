@@ -53,9 +53,9 @@ while IFS= read -r needed; do
 done < <(awk -F'[][]' '/Shared library:/ { print $2 }' "$stage/node.dynamic.txt")
 
 mkdir -p "$OUTPUT_DIR"
-rm -f "$OUTPUT_DIR/node-runtime-arm64.tar.gz" "$OUTPUT_DIR/node-runtime-arm64.sha256" "$OUTPUT_DIR/node-runtime-packages.txt" "$OUTPUT_DIR/node-runtime-deb-checksums.txt"
-tar -czf "$OUTPUT_DIR/node-runtime-arm64.tar.gz" -C "$stage/data/data/${APP_ID}/files" usr
-(cd "$OUTPUT_DIR" && sha256sum node-runtime-arm64.tar.gz > node-runtime-arm64.sha256)
+rm -f "$OUTPUT_DIR/rea-runtime-arm64.tar.gz" "$OUTPUT_DIR/rea-runtime-arm64.sha256" "$OUTPUT_DIR/node-runtime-packages.txt" "$OUTPUT_DIR/node-runtime-deb-checksums.txt"
+tar -czf "$OUTPUT_DIR/rea-runtime-arm64.tar.gz" -C "$stage/data/data/${APP_ID}/files" usr
+(cd "$OUTPUT_DIR" && sha256sum rea-runtime-arm64.tar.gz > rea-runtime-arm64.sha256)
 printf '%s\n' "${packages[@]##*/}" > "$OUTPUT_DIR/node-runtime-packages.txt"
 sha256sum "${packages[@]}" > "$OUTPUT_DIR/node-runtime-deb-checksums.txt"
 cp "$stage/node.dynamic.txt" "$OUTPUT_DIR/node.dynamic.txt"
@@ -64,6 +64,6 @@ cp "$stage/node.elf.txt" "$OUTPUT_DIR/node.elf.txt"
 echo "Packaged Android/Bionic Node runtime candidate:"
 echo "  app id: $APP_ID"
 echo "  prefix: $EXPECTED_PREFIX"
-echo "  archive: $OUTPUT_DIR/node-runtime-arm64.tar.gz"
+echo "  archive: $OUTPUT_DIR/rea-runtime-arm64.tar.gz"
 echo "  packages: ${#packages[@]}"
 echo "This is a packaging/ELF check only; execution inside the REA APK is still required."
