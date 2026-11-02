@@ -57,3 +57,12 @@ Sources:
 - [Termux package build configuration](https://github.com/termux/termux-packages/wiki/Building-packages)
 - [Termux build properties and app data/prefix variables](https://github.com/termux/termux-packages/blob/master/scripts/properties.sh)
 - [Termux private prefix layout](https://github.com/termux/termux-packages/wiki/Termux-file-system-layout)
+
+
+## Reproducible runtime-candidate build
+
+The repository now contains `.github/workflows/android-node-runtime.yml` and `scripts/android/package-termux-runtime.sh`.
+
+The workflow checks out Termux package recipes at commit `d4e5b905c5582a33cd77922a9b7bb4f05b80104c`, changes the Termux app ID in the build properties to the REA Android application ID `tools.rea.mobile`, and invokes the official Termux package-builder container to build `nodejs-lts` plus its Bionic dependencies for `aarch64`. The package outputs are unpacked into the exact app-private prefix `/data/data/tools.rea.mobile/files/usr`, then the Node ELF header, Android linker interpreter, dynamic dependencies and old default Termux prefix references are checked. The workflow uploads the runtime archive and inspection evidence.
+
+This workflow is a **candidate-build stage**, not proof of runtime execution inside the APK. The next required stage is to place the archive in an Android test host, extract it under the REA app's actual private files directory, launch Node under the REA application UID/SELinux domain, and run the REA CLI/MCP smoke tests. The runtime is not wired into the current Expo UI until that Android process test passes.
