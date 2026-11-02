@@ -243,7 +243,7 @@ export default function App() {
               {!!toolResult && <Text selectable style={styles.toolResult}>{toolResult}</Text>}
               <TouchableOpacity
                 style={styles.stopButton}
-                onPress={() => ReaRuntime.stopMcp().then(() => setEngineStatus("تم إيقاف محرك MCP المحلي"))}
+                onPress={() => ReaRuntime.cancelMcp().then(() => setEngineStatus("تم إيقاف/إلغاء محرك MCP المحلي"))}
               >
                 <Text style={styles.stopText}>إيقاف محرك MCP</Text>
               </TouchableOpacity>
