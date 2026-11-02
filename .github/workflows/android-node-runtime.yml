@@ -11,10 +11,8 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: android-node-runtime-${{ github.ref }}
-  # Native Node builds are long-running; never cancel a valid build because a newer commit arrives.
-  cancel-in-progress: false
+# Keep the ARM64 native build independently schedulable. The toolchain and APK
+# workflows consume its artifact after a successful completion.
 
 jobs:
   build-node-arm64:
