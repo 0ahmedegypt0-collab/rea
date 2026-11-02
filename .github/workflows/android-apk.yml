@@ -160,6 +160,8 @@ jobs:
             adb shell run-as tools.rea.mobile test -x files/usr/bin/binwalk
             adb shell run-as tools.rea.mobile test -x files/usr/bin/apksigner
             adb shell run-as tools.rea.mobile test -x files/usr/bin/aapt2
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/d8
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/r8
             adb shell run-as tools.rea.mobile test -x files/usr/bin/adb
             adb shell run-as tools.rea.mobile test -x files/usr/bin/python
             adb shell run-as tools.rea.mobile sh -c '
