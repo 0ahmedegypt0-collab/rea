@@ -38,8 +38,22 @@ readelf -l "$prefix/bin/node" | grep -q '/system/bin/linker64'
 readelf -d "$prefix/bin/node" > "$stage/node.dynamic.txt"
 readelf -h "$prefix/bin/node" > "$stage/node.elf.txt"
 
+while IFS= read -r needed; do
+  [[ -n "$needed" ]] || continue
+  case "$needed" in
+    libc.so|libm.so|libdl.so|liblog.so|libandroid.so|libz.so|libstdc++.so|libgcc.so|libatomic.so)
+      ;;
+    *)
+      if [[ ! -e "$prefix/lib/$needed" ]]; then
+        echo "Missing packaged Android runtime dependency: $needed" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done < <(sed -n 's/.*Shared library: \\[([^]]*\\)\\].*/\\1/p' "$stage/node.dynamic.txt")
+
 mkdir -p "$OUTPUT_DIR"
-rm -f "$OUTPUT_DIR/node-runtime-arm64.tar.gz" "$OUTPUT_DIR/node-runtime-arm64.sha256" "$OUTPUT_DIR/node-runtime-packages.txt"
+rm -f "$OUTPUT_DIR/node-runtime-arm64.tar.gz" "$OUTPUT_DIR/node-runtime-arm64.sha256" "$OUTPUT_DIR/node-runtime-packages.txt" "$OUTPUT_DIR/node-runtime-deb-checksums.txt"
 tar -czf "$OUTPUT_DIR/node-runtime-arm64.tar.gz" -C "$stage/data/data/${APP_ID}/files" usr
 (cd "$OUTPUT_DIR" && sha256sum node-runtime-arm64.tar.gz > node-runtime-arm64.sha256)
 printf '%s\n' "${packages[@]##*/}" > "$OUTPUT_DIR/node-runtime-packages.txt"
