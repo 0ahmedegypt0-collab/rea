@@ -77,6 +77,9 @@ jobs:
           mkdir -p mobile/android/app/src/main/assets
           cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.tar.gz" mobile/android/app/src/main/assets/rea-runtime-arm64.tar.gz
           cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.sha256" mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
+          cp "${{ runner.temp }}/rea-runtime/toolchain-manifest.json" mobile/android/app/src/main/assets/toolchain-manifest.json
+          cp "${{ runner.temp }}/rea-runtime/rea-tools-packages.txt" mobile/android/app/src/main/assets/rea-tools-packages.txt
+          cp "${{ runner.temp }}/rea-runtime/termux-exec-libraries.txt" mobile/android/app/src/main/assets/termux-exec-libraries.txt
           cp "${{ runner.temp }}/rea-runtime/rea-engine-js.tar.gz" mobile/android/app/src/main/assets/rea-engine-js.tar.gz
           cp "${{ runner.temp }}/rea-runtime/rea-engine-js.sha256" mobile/android/app/src/main/assets/rea-engine-js.sha256
           cp "${{ runner.temp }}/rea-runtime/android-engine-manifest.json" mobile/android/app/src/main/assets/android-engine-manifest.json
