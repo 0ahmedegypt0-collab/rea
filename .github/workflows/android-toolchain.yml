@@ -86,6 +86,15 @@ jobs:
             echo "A toolchain ELF or executable still references the Termux app prefix" >&2
             exit 1
           fi
+          # Remove build-only headers, static archives and manuals; retain
+          # runtime libraries, Java modules, data files and license notices.
+          rm -rf "$stage/usr/include" "$stage/usr/share/man" "$stage/usr/share/info" \
+            "$stage/usr/lib/pkgconfig" "$stage/usr/share/pkgconfig" "$stage/usr/share/aclocal" \
+            "$stage/usr/lib/jvm/java-21-openjdk/include" "$stage/usr/lib/jvm/java-21-openjdk/man"
+          rm -f "$stage/usr/lib/jvm/java-21-openjdk/lib/src.zip"
+          find "$stage/usr" -type f -name '*.a' -delete
+          tar -czf mobile/android/toolchain/rea-tools-arm64.tar.gz -C "$stage" usr
+          (cd mobile/android/toolchain && sha256sum rea-tools-arm64.tar.gz > rea-tools-arm64.sha256)
 
       - name: Merge Node and toolchain prefixes
         run: |
