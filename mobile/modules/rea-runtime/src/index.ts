@@ -28,6 +28,7 @@ type ReaRuntimeNativeModule = {
   listTools(): Promise<string>;
   callTool(name: string, argumentsJson: string): Promise<string>;
   stopMcp(): Promise<boolean>;
+  cancelMcp(): Promise<boolean>;
 };
 
 export default requireNativeModule<ReaRuntimeNativeModule>("ReaRuntime");
