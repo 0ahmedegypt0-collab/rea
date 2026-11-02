@@ -53,4 +53,6 @@ if (/^reactNativeArchitectures=/m.test(gradleProperties)) {
   gradleProperties += "\nreactNativeArchitectures=arm64-v8a\n";
 }
 await writeFile(gradlePropertiesPath, gradleProperties, "utf8");
-console.log("Expo autolinking configured; Android ABI restricted to arm64-v8a.");
+console.log(
+  "Expo autolinking configured; Android ABI restricted to arm64-v8a.",
+);
