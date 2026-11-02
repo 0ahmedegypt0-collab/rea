@@ -11,7 +11,7 @@ const COLORS = {
   bg: "#080D18", panel: "#111B2B", panel2: "#17243A", gold: "#D8AE55",
   text: "#F4F1E8", muted: "#A5B0C2", green: "#62C995", red: "#F07878", line: "#2B3A51",
 };
-type ImportedTarget = { name: string; uri: string; size: number };
+type ImportedTarget = { name: string; uri: string; path: string; size: number };
 type McpTool = { name: string; description?: string; inputSchema?: Record<string, unknown> };
 const workspace = new Directory(Paths.document, "rea-workspace", "targets");
 
@@ -40,7 +40,7 @@ export default function App() {
       workspace.create({ idempotent: true, intermediates: true });
       const files = workspace.list().filter((entry): entry is File => entry instanceof File);
       setTargets(files.map((file) => ({
-        name: file.name, uri: file.uri, size: file.size ?? 0,
+        name: file.name, uri: file.uri, path: decodeURIComponent(file.uri.replace(/^file:\/\//, "")), size: file.size ?? 0,
       })));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -179,6 +179,7 @@ export default function App() {
               <View style={styles.fileInfo}>
                 <Text style={styles.fileName} numberOfLines={1}>{target.name}</Text>
                 <Text style={styles.fileSize}>{formatBytes(target.size)}</Text>
+                <Text selectable style={styles.filePath}>{target.path}</Text>
               </View>
               <View style={styles.savedMark}><Text style={styles.savedMarkText}>محلي</Text></View>
             </View>
@@ -297,6 +298,7 @@ const styles = StyleSheet.create({
   fileInfo: { flex: 1, gap: 3 },
   fileName: { color: COLORS.text, fontSize: 12, fontWeight: "700", textAlign: "left" },
   fileSize: { color: COLORS.muted, fontSize: 10, textAlign: "left" },
+  filePath: { color: "#8797AE", fontSize: 8, textAlign: "left" },
   savedMark: { borderColor: "#397B60", borderWidth: 1, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 4 },
   savedMarkText: { color: COLORS.green, fontSize: 10, fontWeight: "700" },
   error: { color: COLORS.red, fontSize: 11, textAlign: "left" },
