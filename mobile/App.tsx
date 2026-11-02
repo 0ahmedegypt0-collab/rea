@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Directory, File, Paths } from "expo-file-system";
+import ReaRuntime from "./modules/rea-runtime/src";
 
 const COLORS = {
   bg: "#080D18", panel: "#111B2B", panel2: "#17243A", gold: "#D8AE55",
@@ -24,6 +25,7 @@ export default function App() {
   const [targets, setTargets] = useState<ImportedTarget[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("مساحة العمل المحلية جاهزة");
+  const [engineStatus, setEngineStatus] = useState("جارٍ فحص محرك Android المحلي...");
   const [error, setError] = useState("");
 
   const refreshWorkspace = useCallback(() => {
@@ -38,7 +40,26 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => { refreshWorkspace(); }, [refreshWorkspace]);
+  useEffect(() => {
+    refreshWorkspace();
+    let active = true;
+    ReaRuntime.inspect()
+      .then(async (inspection) => {
+        if (!active) return;
+        if (!inspection.available) {
+          setEngineStatus("محرك Node 24 لم يُضمّن في هذه النسخة بعد");
+          return;
+        }
+        const runtime = await ReaRuntime.runVersion();
+        if (active) setEngineStatus("تم تشغيل " + runtime.version + " محليًا داخل التطبيق");
+      })
+      .catch((cause) => {
+        if (active) setEngineStatus(
+          cause instanceof Error ? "تعذر فحص المحرك: " + cause.message : String(cause),
+        );
+      });
+    return () => { active = false; };
+  }, [refreshWorkspace]);
 
   async function importTargets() {
     setBusy(true);
@@ -95,6 +116,7 @@ export default function App() {
             واجهة الاتصال بخادم خارجي أُخرجت من مسار التطبيق. يجري تجهيز Runtime متوافق مع Android
             ثم ربط أدوات REA الأصلية به. لن نعرض أداة على أنها تعمل قبل اختبارها فعليًا على Android.
           </Text>
+          <Text style={styles.hint}>{engineStatus}</Text>
           <Text style={styles.hint}>{status}</Text>
         </View>
 
