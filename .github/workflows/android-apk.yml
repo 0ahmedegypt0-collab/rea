@@ -159,6 +159,11 @@ jobs:
             adb shell run-as tools.rea.mobile test -x files/usr/bin/apktool
             adb shell run-as tools.rea.mobile test -x files/usr/bin/rizin
             adb shell run-as tools.rea.mobile test -x files/usr/bin/radare2
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/wasmtime
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/wasm-objdump
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/wasm2wat
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/wat2wasm
+            adb shell run-as tools.rea.mobile test -x files/usr/bin/wasm-validate
             adb shell run-as tools.rea.mobile test -x files/usr/bin/gdb
             adb shell run-as tools.rea.mobile test -x files/usr/bin/binwalk
             adb shell run-as tools.rea.mobile test -x files/usr/bin/apksigner
@@ -192,4 +197,9 @@ jobs:
               "$PREFIX/bin/gdb" --version >/dev/null
               "$PREFIX/bin/rizin" -v >/dev/null
               "$PREFIX/bin/radare2" -v >/dev/null
+              "$PREFIX/bin/wasmtime" --version >/dev/null
+              "$PREFIX/bin/wasm-objdump" --version >/dev/null
+              "$PREFIX/bin/wasm2wat" --version >/dev/null
+              "$PREFIX/bin/wat2wasm" --version >/dev/null
+              "$PREFIX/bin/wasm-validate" --version >/dev/null
             '
