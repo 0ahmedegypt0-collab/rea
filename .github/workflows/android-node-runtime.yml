@@ -5,7 +5,6 @@ on:
   push:
     paths:
       - "scripts/android/**"
-      - "mobile/ANDROID_RUNTIME_SPIKE.md"
       - ".github/workflows/android-node-runtime.yml"
 
 permissions:
