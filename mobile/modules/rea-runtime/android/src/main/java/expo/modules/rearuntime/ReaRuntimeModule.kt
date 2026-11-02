@@ -67,9 +67,9 @@ class ReaRuntimeModule : Module() {
     val extractedRoot = File(staging, archiveRootName)
     staging.mkdirs()
 
-    TarArchiveInputStream(
-      GzipCompressorInputStream(BufferedInputStream(input)),
-    ).use { tar ->
+    val gzip = GzipCompressorInputStream(BufferedInputStream(input))
+    val tar = TarArchiveInputStream(gzip)
+    try {
       while (true) {
         val entry = tar.nextTarEntry ?: break
         val name = entry.name.removePrefix("./")
@@ -123,6 +123,15 @@ class ReaRuntimeModule : Module() {
           else -> throw IllegalStateException("Unsupported archive entry type: ${entry.name}")
         }
       }
+    } finally {
+      try {
+        val drain = ByteArray(64 * 1024)
+        while (gzip.read(drain) >= 0) {
+          // Consume the gzip trailer so the streaming SHA-256 covers the complete asset.
+        }
+      } catch (_: Exception) {
+      }
+      tar.close()
     }
 
     if (!File(extractedRoot, requiredRelativePath).isFile) {
