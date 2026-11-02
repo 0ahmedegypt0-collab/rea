@@ -71,7 +71,7 @@ jobs:
           ./scripts/run-docker.sh ./build-package.sh -C -a aarch64 -j2 \
             bash coreutils termux-exec grep sed gawk findutils \
             python python-pip git binutils jq android-tools \
-            unzip zip procps jadx apktool binwalk
+            unzip zip procps jadx apktool binwalk gdb rizin radare2
 
       - name: Package the app-private toolchain prefix
         run: bash scripts/android/package-termux-tools.sh mobile/android/toolchain
