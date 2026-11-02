@@ -4,9 +4,10 @@ import { once } from "node:events";
 import { resolve } from "node:path";
 import { readFile } from "node:fs/promises";
 
-const entry = resolve("scripts/rea.mjs");
+const packageRoot = resolve(process.env.REA_MCP_PACKAGE_ROOT ?? process.cwd());
+const entry = resolve(packageRoot, "scripts/rea.mjs");
 const child = spawn(process.execPath, [entry, "mcp"], {
-  cwd: process.cwd(),
+  cwd: packageRoot,
   env: {
     ...process.env,
     REA_MCP_INPUT_SCHEMA_PROFILE: "full",
@@ -102,7 +103,7 @@ try {
     throw new Error("The local REA MCP process returned duplicate tool names");
   }
 
-  const catalog = JSON.parse(await readFile("dist/mcp-catalog-full.json", "utf8"));
+  const catalog = JSON.parse(await readFile(resolve(packageRoot, "dist/mcp-catalog-full.json"), "utf8"));
   if (tools.length !== catalog.tools.length) {
     throw new Error(`MCP tools/list returned ${tools.length}; full catalog records ${catalog.tools.length}`);
   }
