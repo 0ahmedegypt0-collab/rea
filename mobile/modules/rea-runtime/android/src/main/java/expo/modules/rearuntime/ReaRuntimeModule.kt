@@ -12,8 +12,9 @@ import java.io.BufferedWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.io.File
-import java.io.FileInputStream
+import java.io.InputStream
 import java.io.FileOutputStream
+import java.security.DigestInputStream
 import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONObject
@@ -41,18 +42,6 @@ class ReaRuntimeModule : Module() {
   private fun runtimePrefix(): File = File(appFilesDirectory(), "usr")
   private fun engineDirectory(): File = File(appFilesDirectory(), "rea-engine")
 
-  private fun sha256(file: File): String {
-    val digest = MessageDigest.getInstance("SHA-256")
-    FileInputStream(file).use { input ->
-      val buffer = ByteArray(64 * 1024)
-      while (true) {
-        val count = input.read(buffer)
-        if (count < 0) break
-        digest.update(buffer, 0, count)
-      }
-    }
-    return digest.digest().joinToString("") { "%02x".format(it) }
-  }
 
   private fun isSymbolicLink(file: File): Boolean = try {
     (Os.lstat(file.absolutePath).st_mode and OsConstants.S_IFMT) == OsConstants.S_IFLNK
@@ -68,7 +57,7 @@ class ReaRuntimeModule : Module() {
   }
 
   private fun extractArchive(
-    archive: File,
+    input: InputStream,
     staging: File,
     archiveRootName: String,
     requiredRelativePath: String,
@@ -79,7 +68,7 @@ class ReaRuntimeModule : Module() {
     staging.mkdirs()
 
     TarArchiveInputStream(
-      GzipCompressorInputStream(BufferedInputStream(FileInputStream(archive))),
+      GzipCompressorInputStream(BufferedInputStream(input)),
     ).use { tar ->
       while (true) {
         val entry = tar.nextTarEntry ?: break
@@ -158,24 +147,26 @@ class ReaRuntimeModule : Module() {
       throw IllegalStateException("The APK does not contain $archiveName and $checksumName")
     }
 
-    val archive = File(context.cacheDir, archiveName)
-    context.assets.open(archiveName).use { input ->
-      FileOutputStream(archive).use { output -> input.copyTo(output) }
-    }
     val expected = context.assets.open(checksumName).bufferedReader().use { it.readText() }
       .trim().substringBefore(' ')
-    val actual = sha256(archive)
-    if (!expected.matches(Regex("^[0-9a-f]{64}$")) || expected != actual) {
-      archive.delete()
-      throw IllegalStateException("Checksum verification failed for $archiveName")
+    if (!expected.matches(Regex("^[0-9a-f]{64}$"))) {
+      throw IllegalStateException("Invalid checksum asset for $archiveName")
     }
 
     val staging = File(context.filesDir, stagingName)
     val backup = File(context.filesDir, backupName)
     removeRecursively(staging)
     removeRecursively(backup)
+    var actual = ""
     try {
-      extractArchive(archive, staging, archiveRootName, requiredRelativePath, destination)
+      val digest = MessageDigest.getInstance("SHA-256")
+      context.assets.open(archiveName).use { raw ->
+        extractArchive(DigestInputStream(raw, digest), staging, archiveRootName, requiredRelativePath, destination)
+      }
+      actual = digest.digest().joinToString("") { "%02x".format(it) }
+      if (expected != actual) {
+        throw IllegalStateException("Checksum verification failed for $archiveName")
+      }
       if (destination.exists() && !destination.renameTo(backup)) {
         throw IllegalStateException("Could not move the previous private installation aside")
       }
@@ -188,7 +179,6 @@ class ReaRuntimeModule : Module() {
       File(context.filesDir, markerName).writeText(actual)
     } finally {
       removeRecursively(staging)
-      archive.delete()
     }
 
     mapOf(
