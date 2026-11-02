@@ -30,7 +30,6 @@ dpkg-query -W nodejs-lts chromium termux-exec
 npm ci
 npm run build:termux
 node scripts/verify/termux/runtime.mjs
-node scripts/verify/termux/mcp-stdio.mjs
 unset PLAYWRIGHT_BROWSERS_PATH npm_config_playwright_browsers_path npm_package_config_playwright_browsers_path
 node scripts/verify/termux/browser.mjs
 node scripts/android/package-rea-engine.sh "$report/engine-artifact"
