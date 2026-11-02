@@ -76,6 +76,17 @@ jobs:
       - name: Package the app-private toolchain prefix
         run: bash scripts/android/package-termux-tools.sh mobile/android/toolchain
 
+      - name: Verify the toolchain has no Termux app paths
+        run: |
+          stage="${{ runner.temp }}/rea-tools-scan"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+          tar -xzf mobile/android/toolchain/rea-tools-arm64.tar.gz -C "$stage"
+          if find "$stage/usr/bin" "$stage/usr/lib" -type f -exec grep -a -l "/data/data/com.termux" {} + | grep -q .; then
+            echo "A toolchain ELF or executable still references the Termux app prefix" >&2
+            exit 1
+          fi
+
       - name: Merge Node and toolchain prefixes
         run: |
           stage="${{ runner.temp }}/rea-merged-prefix"
