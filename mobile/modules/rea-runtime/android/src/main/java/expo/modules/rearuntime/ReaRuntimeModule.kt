@@ -238,7 +238,7 @@ class ReaRuntimeModule : Module() {
 
     while (true) {
       val line = reader.readLine()
-        ?: throw IllegalStateException("REA MCP process closed its output stream: \${mcpErrors.joinToString("\n")}")
+        ?: throw IllegalStateException("REA MCP process closed its output stream: " + synchronized(mcpErrors) { mcpErrors.joinToString("\n") })
       if (line.isBlank()) continue
       val message = try {
         JSONObject(line)
