@@ -7,7 +7,7 @@ on:
       - "mobile/**"
       - ".github/workflows/android-apk.yml"
   workflow_run:
-    workflows: ["Build app-private Android Node runtime"]
+    workflows: ["Real Termux browser verification"]
     types: [completed]
 
 permissions:
@@ -65,7 +65,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         uses: actions/download-artifact@v4
         with:
-          name: rea-node24-android-arm64-candidate
+          name: rea-android-engine-assets
           path: ${{ runner.temp }}/rea-runtime
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -77,7 +77,11 @@ jobs:
           mkdir -p mobile/android/app/src/main/assets
           cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.tar.gz" mobile/android/app/src/main/assets/rea-runtime-arm64.tar.gz
           cp "${{ runner.temp }}/rea-runtime/rea-runtime-arm64.sha256" mobile/android/app/src/main/assets/rea-runtime-arm64.sha256
-          (cd mobile/android/app/src/main/assets && sha256sum --check rea-runtime-arm64.sha256)
+          cp "${{ runner.temp }}/rea-runtime/rea-engine-js.tar.gz" mobile/android/app/src/main/assets/rea-engine-js.tar.gz
+          cp "${{ runner.temp }}/rea-runtime/rea-engine-js.sha256" mobile/android/app/src/main/assets/rea-engine-js.sha256
+          cp "${{ runner.temp }}/rea-runtime/android-engine-manifest.json" mobile/android/app/src/main/assets/android-engine-manifest.json
+          cp "${{ runner.temp }}/rea-runtime/native-addons.txt" mobile/android/app/src/main/assets/native-addons.txt
+          (cd mobile/android/app/src/main/assets && sha256sum --check rea-runtime-arm64.sha256 && sha256sum --check rea-engine-js.sha256)
 
       - name: Build installable debug APK
         working-directory: mobile/android
