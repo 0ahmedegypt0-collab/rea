@@ -51,6 +51,7 @@ jobs:
             exit 0
           fi
           git commit -m "style: apply repository formatter"
+          git stash push -m "formatted workflows are in the uploaded artifact" -- .github/workflows
           git fetch origin main
           git rebase origin/main
           git push
