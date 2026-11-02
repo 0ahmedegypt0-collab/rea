@@ -68,9 +68,19 @@ jobs:
             if docker pull "$image"; then
               exit 0
             fi
-            echo "Pinned GHCR layer download failed (attempt $attempt/3); clearing incomplete image data before retry" >&2
+            echo "Pinned GHCR layer download failed (attempt $attempt/3); restarting Docker and clearing incomplete image data before retry" >&2
             docker image rm "$image" >/dev/null 2>&1 || true
             docker system prune --force --all >/dev/null 2>&1 || true
+            # A failed OCI layer extraction can leave containerd's content store
+            # inconsistent even after pruning. Restart the daemon before retrying.
+            sudo systemctl restart docker
+            for ready_attempt in 1 2 3 4 5 6 7 8 9 10; do
+              if docker info >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+            docker info >/dev/null
             sleep $((attempt * 10))
           done
           echo "Unable to pull the pinned Termux builder image after three attempts" >&2
