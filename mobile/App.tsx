@@ -50,13 +50,23 @@ export default function App() {
           setEngineStatus("جارٍ تثبيت محرك Node 24 المضمّن...");
           await ReaRuntime.installBundledRuntime();
         }
-        const current = await ReaRuntime.inspect();
+        let current = await ReaRuntime.inspect();
         if (!current.available) {
           setEngineStatus("محرك Node 24 غير مضمّن في هذه النسخة بعد");
           return;
         }
+        if (!current.engineAvailable && current.engineAssetPresent) {
+          setEngineStatus("جارٍ تثبيت محرك REA وكتالوج الأدوات...");
+          await ReaRuntime.installBundledEngine();
+          current = await ReaRuntime.inspect();
+        }
         const runtime = await ReaRuntime.runVersion();
-        if (active) setEngineStatus("تم تشغيل " + runtime.version + " محليًا داخل التطبيق");
+        if (active && current.engineAvailable) {
+          const catalog = JSON.parse(await ReaRuntime.readCatalog());
+          setEngineStatus("محرك REA يعمل محليًا على " + runtime.version + " — " + catalog.tools.length + " أداة");
+        } else if (active) {
+          setEngineStatus("محرك Node يعمل محليًا، وحزمة REA لم تُضمّن بعد");
+        }
       })
       .catch((cause) => {
         if (active) setEngineStatus(
