@@ -183,7 +183,7 @@ class ReaRuntimeModule : Module() {
         throw IllegalStateException("Could not activate the new app-private installation")
       }
       removeRecursively(backup)
-      File(context.filesDir, markerName).writeText(actual)
+      File(appFilesDirectory(), markerName).writeText(actual)
     } finally {
       removeRecursively(staging)
     }
@@ -404,7 +404,7 @@ class ReaRuntimeModule : Module() {
         "nodePath" to node.absolutePath,
         "prefixPath" to runtimePrefix().absolutePath,
         "enginePath" to engineDirectory().absolutePath,
-        "appPrivateDirectory" to context.filesDir.absolutePath,
+        "appPrivateDirectory" to appFilesDirectory().absolutePath,
         "architecture" to System.getProperty("os.arch"),
       )
     }
