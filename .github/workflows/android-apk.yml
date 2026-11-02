@@ -134,11 +134,11 @@ jobs:
             ready=false
             for attempt in $(seq 1 450); do
               logs="$(adb logcat -d -s REA_RUNTIME:I REA_RUNTIME:E)"
-              if grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"; then
+              if grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs" && grep -q "MCP_TOOL_CALL_READY name=inspect_analysis_settings" <<<"$logs"; then
                 ready=true
                 break
               fi
-              if grep -Eq "MCP_START_FAILED|NODE_START_FAILED|NODE_VERSION_FAILED|NODE_VERSION_TIMEOUT" <<<"$logs"; then
+              if grep -Eq "MCP_START_FAILED|MCP_TOOL_CALL_FAILED|NODE_START_FAILED|NODE_VERSION_FAILED|NODE_VERSION_TIMEOUT" <<<"$logs"; then
                 printf '%s\n' "$logs"
                 exit 1
               fi
@@ -149,6 +149,7 @@ jobs:
             test "$ready" = true
             grep -q "NODE_READY" <<<"$logs"
             grep -Eq "MCP_READY toolCount=[1-9][0-9]*" <<<"$logs"
+            grep -q "MCP_TOOL_CALL_READY name=inspect_analysis_settings" <<<"$logs"
             adb shell run-as tools.rea.mobile test -x files/usr/bin/node
             adb shell run-as tools.rea.mobile test -f files/rea-engine/scripts/rea.mjs
             adb shell run-as tools.rea.mobile test -x files/usr/bin/jadx
