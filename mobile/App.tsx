@@ -76,7 +76,10 @@ export default function App() {
           setTools(listing.tools ?? []);
           setSelectedTool(listing.tools?.[0] ?? null);
           if (listing.tools?.some((tool) => tool.name === "inspect_analysis_settings")) {
-            await ReaRuntime.callTool("inspect_analysis_settings", "{}");
+            const diagnostic = JSON.parse(
+              await ReaRuntime.callTool("inspect_analysis_settings", "{}"),
+            ) as { isError?: boolean };
+            if (diagnostic.isError) throw new Error("اختبار استدعاء أدوات REA المحلي فشل");
           }
           if (!active) return;
           setEngineStatus("محرك REA يعمل محليًا على " + runtime.version + " — " + (listing.tools?.length ?? catalog.tools.length) + " أداة");
