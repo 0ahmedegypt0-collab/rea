@@ -31,15 +31,25 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Apply repository formatter
         run: npm run format
-      - name: Commit formatting changes
+      - name: Publish formatter output for workflow files
+        run: |
+          tar -czf "$RUNNER_TEMP/formatted-workflows.tar.gz" .github/workflows
+      - name: Upload formatted workflow files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: formatted-github-workflows
+          path: ${{ runner.temp }}/formatted-workflows.tar.gz
+          if-no-files-found: error
+          retention-days: 3
+      - name: Commit non-workflow formatting changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet; then
-            echo "All tracked files already satisfy the formatter."
+          git add -u -- . ':!.github/workflows/**'
+          if git diff --cached --quiet; then
+            echo "No non-workflow formatting changes remain."
             exit 0
           fi
-          git add -u
           git commit -m "style: apply repository formatter"
           git fetch origin main
           git rebase origin/main
