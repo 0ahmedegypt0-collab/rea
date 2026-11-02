@@ -41,11 +41,11 @@ engine_filter="$report/engine-filter"
 rm -rf "$engine_filter"
 mkdir -p "$engine_filter"
 tar -xzf "$report/engine-artifact/rea-engine-js.tar.gz" -C "$engine_filter"
-grep -R -I -l "/data/data/com.termux/files/usr" "$engine_filter/package" > "$report/termux-prefix-leaks.txt" || true
+find "$engine_filter/package" -type f -exec grep -I -l "/data/data/com.termux/files/usr" {} + > "$report/termux-prefix-leaks.txt" || true
 while IFS= read -r file; do
   sed -i 's#/data/data/com.termux/files/usr#/data/data/tools.rea.mobile/files/usr#g' "$file"
 done < "$report/termux-prefix-leaks.txt"
-if grep -R -I -n "/data/data/com.termux/files/usr" "$engine_filter/package"; then
+if find "$engine_filter/package" -type f -exec grep -I -n "/data/data/com.termux/files/usr" {} + | grep -q .; then
   echo "The REA engine bundle still contains Termux-specific absolute paths" >&2
   exit 1
 fi
