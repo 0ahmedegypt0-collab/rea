@@ -2,6 +2,7 @@ import { requireNativeModule } from "expo";
 
 export type ReaRuntimeInspection = {
   available: boolean;
+  bundledAssetPresent: boolean;
   nodePath: string;
   prefixPath: string;
   appPrivateDirectory: string;
@@ -17,6 +18,7 @@ export type ReaRuntimeVersion = {
 type ReaRuntimeNativeModule = {
   inspect(): Promise<ReaRuntimeInspection>;
   runVersion(): Promise<ReaRuntimeVersion>;
+  installBundledRuntime(): Promise<{ installed: boolean; sha256: string; prefixPath: string }>;
 };
 
 export default requireNativeModule<ReaRuntimeNativeModule>("ReaRuntime");
