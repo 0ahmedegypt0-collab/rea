@@ -332,7 +332,7 @@ class ReaRuntimeModule : Module() {
         ?: throw IllegalStateException("REA MCP tools/list response did not contain a result")
       val batch = result.optJSONArray("tools") ?: JSONArray()
       for (index in 0 until batch.length()) allTools.put(batch.get(index))
-      cursor = result.optString("nextCursor").takeIf { it.isNotBlank() }
+      cursor = if (result.has("nextCursor") && !result.isNull("nextCursor")) result.getString("nextCursor").takeIf { it.isNotBlank() } else null
     } while (cursor != null)
     JSONObject().put("tools", allTools).toString()
   }
@@ -353,6 +353,10 @@ class ReaRuntimeModule : Module() {
   private fun stopMcpInternal() {
     try {
       mcpWriter?.close()
+    } catch (_: Exception) {
+    }
+    try {
+      mcpReader?.close()
     } catch (_: Exception) {
     }
     val process = mcpProcess
