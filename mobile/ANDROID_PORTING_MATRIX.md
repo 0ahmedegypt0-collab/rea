@@ -13,7 +13,7 @@ This matrix is an engineering register, not a claim that every capability alread
 - The current Termux `nodejs-lts` package recipe reports Node 24.22.2, which satisfies REA's declared Node 24 range (>=24.22.1). The `nodejs-mobile-react-native` package currently documents a Node 18.20.4 runtime, which does **not** satisfy REA's Node engine requirement; it is not a drop-in embedding solution.
 - The Termux verification installs Android's Termux Node.js LTS and Chromium packages, builds REA inside the Android app sandbox, runs `rea mcp doctor`, and exercises a real Chromium browser capture.
 - The real-Termux workflow is manually dispatched. Its existence is evidence of a supported Android/Termux route, not proof that all REA providers run on Android or that the current Expo APK contains the engine.
-- The current `mobile/` project is only a remote MCP client prototype. It asks for an HTTP endpoint and therefore does **not** meet the standalone-app requirement. It is not the final architecture.
+- The current `mobile/` project is a local-only Expo workspace with app-private file import and an Android Expo native module for probing a Node executable under the app UID. The Node executable is not yet packaged in the APK, so the native bridge is a diagnostic foundation, not a functioning REA engine.
 
 ## Capability inventory
 
@@ -124,3 +124,13 @@ The source-of-truth capability declarations currently contain 66 groups. No grou
 - Import and analyze a real APK using local tools; cancel an operation; relaunch; verify workspace cleanup and retained evidence.
 - APK size, memory, CPU, battery and storage are measured. Optional large engines may be separate in-app downloadable packs only if they remain installed and managed by the app; core operation must not require a remote engine.
 - CI builds a signed/debug APK and runs device/emulator smoke tests. No APK is declared ready until these checks pass.
+
+
+## Current implementation checkpoint (2026-11-02)
+
+- The UI no longer asks for a remote MCP endpoint or IP address.
+- File import uses Android's document picker and app-private storage.
+- A local Expo native module (`ReaRuntime`) exposes runtime inspection and a real `node --version` child-process probe using the REA app's private `files/usr` prefix.
+- A reproducible workflow now rebuilds Termux Node.js LTS and its Bionic dependencies for the exact Android application ID `tools.rea.mobile`, using pinned Termux recipes and arm64-v8a.
+- The runtime workflow produces a candidate archive only after ELF architecture/interpreter checks and prefix checks. The archive still needs to be executed from an installed REA APK before Stage A can be marked complete.
+- All 66 capability groups remain Not assessed until real Android operation tests pass.
