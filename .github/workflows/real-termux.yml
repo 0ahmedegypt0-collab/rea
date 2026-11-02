@@ -102,6 +102,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rea-engine-js-candidate
-          path: ${{ runner.temp }}/rea-termux/engine-artifact
+          path: |
+            ${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.tar.gz
+            ${{ runner.temp }}/rea-termux/engine-artifact/rea-engine-js.sha256
+            ${{ runner.temp }}/rea-termux/engine-artifact/android-engine-manifest.json
+            ${{ runner.temp }}/rea-termux/engine-artifact/native-addons.txt
           if-no-files-found: error
           retention-days: 14
