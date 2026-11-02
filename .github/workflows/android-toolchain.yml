@@ -108,30 +108,12 @@ jobs:
           test -x "$stage/usr/bin/bash"
           test -x "$stage/usr/bin/python"
           test -x "$stage/usr/bin/adb"
-          while IFS= "$stage/usr/share/man" "$stage/usr/share/info" \
-            "$stage/usr/lib/pkgconfig" "$stage/usr/share/pkgconfig" "$stage/usr/share/aclocal"
-          find "$stage/usr" -type f -name '*.a' -delete
-          tar -czf "$output/rea-runtime-arm64.tar.gz" -C "$stage" usr
-          (cd "$output" && sha256sum rea-runtime-arm64.tar.gz > rea-runtime-arm64.sha256)
-          cp mobile/android/toolchain/rea-tools-packages.txt "$output/"
-          cp mobile/android/toolchain/rea-tools-deb-checksums.txt "$output/"
-          cp mobile/android/toolchain/termux-exec-libraries.txt "$output/"
-          cp mobile/android/toolchain/toolchain-manifest.json "$output/"
-          cp "${{ runner.temp }}/rea-node-runtime/termux-builder-image.txt" "$output/"
-
-      - name: Upload merged standalone Android runtime candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: rea-android-runtime-arm64-candidate
-          path: ${{ runner.temp }}/rea-android-runtime
-          if-no-files-found: error
-          retention-days: 14
-\\t' read -r link target; do
+          while IFS='|' read -r link target; do
             if [[ "$target" == /* && "$target" != /data/data/tools.rea.mobile/files/usr* ]]; then
               echo "Unsupported absolute symlink in app-private prefix: $link -> $target" >&2
               exit 1
             fi
-          done < <(find "$stage/usr" -type l -printf '%p\\t%l\\n')
+          done < <(find "$stage/usr" -type l -printf '%p|%l\\n')
           rm -rf "$stage/usr/include" "$stage/usr/share/man" "$stage/usr/share/info" \
             "$stage/usr/lib/pkgconfig" "$stage/usr/share/pkgconfig" "$stage/usr/share/aclocal"
           find "$stage/usr" -type f -name '*.a' -delete
