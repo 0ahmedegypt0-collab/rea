@@ -33,3 +33,26 @@ node scripts/verify/termux/runtime.mjs
 unset PLAYWRIGHT_BROWSERS_PATH npm_config_playwright_browsers_path npm_package_config_playwright_browsers_path
 node scripts/verify/termux/browser.mjs
 node scripts/android/package-rea-engine.sh "$report/engine-artifact"
+
+# The emulator is x86_64 while the APK runtime target is arm64-v8a. Preserve
+# the native-addon inventory, but exclude emulator-ABI .node files from the
+# portable JavaScript engine payload until an arm64 Android build is available.
+engine_filter="$report/engine-filter"
+rm -rf "$engine_filter"
+mkdir -p "$engine_filter"
+tar -xzf "$report/engine-artifact/rea-engine-js.tar.gz" -C "$engine_filter"
+find "$engine_filter/package/node_modules" -type f -name '*.node' -print \
+  | sed "s#^$engine_filter/package/##" > "$report/engine-artifact/native-addons-excluded.txt"
+find "$engine_filter/package/node_modules" -type f -name '*.node' -delete
+node --input-type=module - "$engine_filter/package/android-engine-manifest.json" <<'NODE'
+import { readFileSync, writeFileSync } from "node:fs";
+const path = process.argv[2];
+const manifest = JSON.parse(readFileSync(path, "utf8"));
+manifest.nativeAddonsExcludedFromArm64Bundle = true;
+writeFileSync(path, JSON.stringify(manifest, null, 2) + "\n");
+NODE
+REA_MCP_PACKAGE_ROOT="$engine_filter/package" node scripts/verify/termux/mcp-stdio.mjs
+tar -czf "$report/engine-artifact/rea-engine-js.tar.gz" -C "$engine_filter" package
+(cd "$report/engine-artifact" && sha256sum rea-engine-js.tar.gz > rea-engine-js.sha256)
+cp "$engine_filter/package/android-engine-manifest.json" "$report/engine-artifact/android-engine-manifest.json"
+rm -rf "$engine_filter"
