@@ -75,6 +75,10 @@ export default function App() {
           if (!active) return;
           setTools(listing.tools ?? []);
           setSelectedTool(listing.tools?.[0] ?? null);
+          if (listing.tools?.some((tool) => tool.name === "inspect_analysis_settings")) {
+            await ReaRuntime.callTool("inspect_analysis_settings", "{}");
+          }
+          if (!active) return;
           setEngineStatus("محرك REA يعمل محليًا على " + runtime.version + " — " + (listing.tools?.length ?? catalog.tools.length) + " أداة");
         } else if (active) {
           setEngineStatus("محرك Node يعمل محليًا، وحزمة REA لم تُضمّن بعد");
