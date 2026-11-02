@@ -42,6 +42,7 @@ class ReaRuntimeModule : Module() {
 
   private fun runtimePrefix(): File = File(appFilesDirectory(), "usr")
   private fun engineDirectory(): File = File(appFilesDirectory(), "rea-engine")
+  private fun workspaceDirectory(): File = File(appFilesDirectory(), "rea-workspace").apply { mkdirs() }
 
 
   private fun isSymbolicLink(file: File): Boolean = try {
