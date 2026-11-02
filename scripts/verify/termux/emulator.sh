@@ -70,3 +70,4 @@ adb pull "$app_home/rea-ci/engine-artifact/rea-engine-js.tar.gz" "$staging/engin
 adb pull "$app_home/rea-ci/engine-artifact/rea-engine-js.sha256" "$staging/engine-artifact/"
 adb pull "$app_home/rea-ci/engine-artifact/android-engine-manifest.json" "$staging/engine-artifact/"
 adb pull "$app_home/rea-ci/engine-artifact/native-addons.txt" "$staging/engine-artifact/"
+adb pull "$app_home/rea-ci/engine-artifact/native-addons-excluded.txt" "$staging/engine-artifact/"
