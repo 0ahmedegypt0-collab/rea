@@ -29,6 +29,10 @@ prefix="$STAGE_DIR/data/data/$APP_ID/files/usr"
   echo "The Android Java/DEX/firmware toolchain is incomplete" >&2
   exit 1
 }
+[[ -x "$prefix/bin/wasmtime" && -x "$prefix/bin/wasm-objdump" && -x "$prefix/bin/wasm2wat" && -x "$prefix/bin/wat2wasm" && -x "$prefix/bin/wasm-validate" ]] || {
+  echo "The WebAssembly analysis toolchain is incomplete" >&2
+  exit 1
+}
 [[ -x "$prefix/bin/grep" && -x "$prefix/bin/sed" && -x "$prefix/bin/find" ]] || {
   echo "The base shell/text utilities are incomplete" >&2
   exit 1
@@ -48,7 +52,7 @@ cat > "$OUTPUT_DIR/toolchain-manifest.json" <<EOF
   "applicationId": "$APP_ID",
   "architecture": "arm64-v8a",
   "prefix": "/data/data/$APP_ID/files/usr",
-  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt2", "d8", "r8", "binwalk", "gdb", "rizin", "radare2"],
+  "executables": ["bash", "python", "git", "adb", "jq", "readelf", "grep", "sed", "find", "java", "jadx", "apktool", "apksigner", "aapt2", "d8", "r8", "binwalk", "gdb", "rizin", "radare2", "wasmtime", "wasm-objdump", "wasm2wat", "wat2wasm", "wasm-validate"],
   "packageCount": ${#packages[@]}
 }
 EOF
