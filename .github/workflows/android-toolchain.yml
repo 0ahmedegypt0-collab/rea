@@ -108,6 +108,9 @@ jobs:
           test -x "$stage/usr/bin/bash"
           test -x "$stage/usr/bin/python"
           test -x "$stage/usr/bin/adb"
+          rm -rf "$stage/usr/include" "$stage/usr/share/man" "$stage/usr/share/info" \
+            "$stage/usr/lib/pkgconfig" "$stage/usr/share/pkgconfig" "$stage/usr/share/aclocal"
+          find "$stage/usr" -type f -name '*.a' -delete
           tar -czf "$output/rea-runtime-arm64.tar.gz" -C "$stage" usr
           (cd "$output" && sha256sum rea-runtime-arm64.tar.gz > rea-runtime-arm64.sha256)
           cp mobile/android/toolchain/rea-tools-packages.txt "$output/"
