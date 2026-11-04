@@ -119,7 +119,7 @@ jobs:
               exit 1
             fi
             echo "Fork already has the correct baseline tag."
-          elif jq -e '.status == 404' <<< "$existing" >/dev/null 2>&1; then
+          elif jq -e '(.status | tostring) == "404"' <<< "$existing" >/dev/null 2>&1; then
             echo "Creating missing baseline tag in ${GH_REPO}."
             gh api --method POST "repos/${GH_REPO}/git/refs" \
               -f "ref=refs/tags/${tag}" -f "sha=${baseline_sha}"
