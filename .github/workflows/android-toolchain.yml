@@ -96,6 +96,13 @@ jobs:
           echo "Unable to pull the pinned Termux builder image after three attempts" >&2
           exit 1
 
+      - name: Declare libsndfile as a PulseAudio build dependency
+        working-directory: termux-packages
+        run: |
+          grep -F 'TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check"' packages/pulseaudio/build.sh
+          sed -i 's/TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check"/TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check, libsndfile"/' packages/pulseaudio/build.sh
+          grep -F 'TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check, libsndfile"' packages/pulseaudio/build.sh
+
       - name: Build Android userland tools and Python runtime
         working-directory: termux-packages
         env:
