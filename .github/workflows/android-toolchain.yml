@@ -42,10 +42,11 @@ jobs:
       - name: Route dialog source download through verified upstream mirror
         working-directory: termux-packages
         run: |
-          # The primary invisible-island.net host returned HTTP 403 in run #27.
-          # Use the project mirror; keep the pinned version and SHA256 unchanged.
-          sed -i 's|^TERMUX_PKG_SRCURL="https://invisible-island.net/archives/dialog/dialog-${TERMUX_PKG_VERSION}\.tgz"$|TERMUX_PKG_SRCURL="https://invisible-mirror.net/archives/dialog/dialog-${TERMUX_PKG_VERSION}.tgz"|' packages/dialog/build.sh
-          grep -F 'TERMUX_PKG_SRCURL="https://invisible-mirror.net/archives/dialog/dialog-${TERMUX_PKG_VERSION}.tgz"' packages/dialog/build.sh
+          # Both invisible-island.net and invisible-mirror.net timed out in CI.
+          # KAIST MacPorts mirrors the exact pinned release archive (586960 bytes).
+          # Keep the upstream SHA256 pin so a mirror mismatch fails closed.
+          sed -i 's|^TERMUX_PKG_SRCURL="https://invisible-island.net/archives/dialog/dialog-${TERMUX_PKG_VERSION}\.tgz"$|TERMUX_PKG_SRCURL="https://ftp.kaist.ac.kr/macports/distfiles/dialog/dialog-${TERMUX_PKG_VERSION}.tgz"|' packages/dialog/build.sh
+          grep -F 'TERMUX_PKG_SRCURL="https://ftp.kaist.ac.kr/macports/distfiles/dialog/dialog-${TERMUX_PKG_VERSION}.tgz"' packages/dialog/build.sh
           grep -F 'TERMUX_PKG_SHA256=62bdf59057d4f760a1cc2217827f07887b4a3eebf694c25eacd4803d2171cdc6' packages/dialog/build.sh
 
       - name: Rebuild package prefix for this Android application ID
