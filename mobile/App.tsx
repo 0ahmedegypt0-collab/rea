@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -158,6 +159,31 @@ export default function App() {
     }
   }
 
+  function confirmDeleteTarget(target: ImportedTarget) {
+    Alert.alert(
+      "حذف ملف التحليل",
+      `هل تريد حذف "${target.name}" من مساحة REA المحلية؟ لا يمكن التراجع عن الحذف.`,
+      [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "حذف الملف",
+          style: "destructive",
+          onPress: () => {
+            try {
+              new File(target.uri).delete();
+              refreshWorkspace();
+              setStatus(`تم حذف ${target.name} من مساحة REA المحلية`);
+              setError("");
+            } catch (cause) {
+              setError(cause instanceof Error ? cause.message : String(cause));
+              setStatus("تعذر حذف الملف");
+            }
+          },
+        },
+      ],
+    );
+  }
+
   async function importTargets() {
     setBusy(true);
     setError("");
@@ -273,8 +299,18 @@ export default function App() {
                     {target.path}
                   </Text>
                 </View>
-                <View style={styles.savedMark}>
-                  <Text style={styles.savedMarkText}>محلي</Text>
+                <View style={styles.fileActions}>
+                  <View style={styles.savedMark}>
+                    <Text style={styles.savedMarkText}>محلي</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.deleteFileButton}
+                    onPress={() => confirmDeleteTarget(target)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`حذف الملف ${target.name}`}
+                  >
+                    <Text style={styles.deleteFileText}>حذف</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))
@@ -568,6 +604,15 @@ const styles = StyleSheet.create({
   },
   fileIconText: { color: COLORS.gold, fontSize: 10, fontWeight: "900" },
   fileInfo: { flex: 1, gap: 3 },
+  fileActions: { alignItems: "center", gap: 7 },
+  deleteFileButton: {
+    borderColor: COLORS.red,
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  deleteFileText: { color: COLORS.red, fontSize: 10, fontWeight: "800" },
   fileName: {
     color: COLORS.text,
     fontSize: 12,
