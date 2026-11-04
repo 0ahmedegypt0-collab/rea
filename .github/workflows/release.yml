@@ -88,6 +88,42 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Restore the verified upstream release baseline tag in this fork
+        if: steps.editorial.outputs.frozen != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(jq -er '."."' .release-please-manifest.json)"
+          tag="rea-agents-${version}"
+
+          # This repository is a fork of morluto/rea. Release Please needs the
+          # existing package baseline tag in the fork as well as in upstream.
+          upstream="$(gh api "repos/morluto/rea/git/ref/tags/${tag}")"
+          baseline_sha="$(jq -er '.object | select(.type == "commit") | .sha' <<< "$upstream")"
+          [[ "$baseline_sha" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "${baseline_sha}^{commit}"
+          git merge-base --is-ancestor "$baseline_sha" "$SOURCE_SHA"
+
+          existing="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}" 2>/dev/null || true)"
+          if [[ -n "$existing" ]]; then
+            existing_sha="$(jq -er '.object.sha' <<< "$existing")"
+            if [[ "$existing_sha" != "$baseline_sha" ]]; then
+              echo "Fork tag ${tag} points to ${existing_sha}, expected verified upstream baseline ${baseline_sha}; refusing to move it." >&2
+              exit 1
+            fi
+          else
+            gh api --method POST "repos/${GH_REPO}/git/refs" \
+              -f "ref=refs/tags/${tag}" -f "sha=${baseline_sha}" >/dev/null
+          fi
+
+          verified="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}")"
+          test "$(jq -er '.object.sha' <<< "$verified")" = "$baseline_sha"
+          echo "Verified ${tag} baseline at ${baseline_sha} in ${GH_REPO}."
+
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         if: steps.editorial.outputs.frozen != 'true'
         with:
