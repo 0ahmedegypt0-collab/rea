@@ -96,17 +96,19 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           version="$(jq -er '."."' .release-please-manifest.json)"
           tag="rea-agents-${version}"
+          echo "Checking upstream release baseline: ${tag}"
 
-          # This repository is a fork of morluto/rea. Release Please needs the
-          # existing package baseline tag in the fork as well as in upstream.
           upstream="$(gh api "repos/morluto/rea/git/ref/tags/${tag}")"
           baseline_sha="$(jq -er '.object | select(.type == "commit") | .sha' <<< "$upstream")"
           [[ "$baseline_sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "Upstream baseline commit: ${baseline_sha}"
           git cat-file -e "${baseline_sha}^{commit}"
+          echo "Baseline commit exists in the checked-out fork history."
           git merge-base --is-ancestor "$baseline_sha" "$SOURCE_SHA"
+          echo "Baseline is an ancestor of source ${SOURCE_SHA}."
 
           existing="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}" 2>/dev/null || true)"
           if [[ -n "$existing" ]]; then
@@ -115,9 +117,11 @@ jobs:
               echo "Fork tag ${tag} points to ${existing_sha}, expected verified upstream baseline ${baseline_sha}; refusing to move it." >&2
               exit 1
             fi
+            echo "Fork already has the correct baseline tag."
           else
+            echo "Creating missing baseline tag in ${GH_REPO}."
             gh api --method POST "repos/${GH_REPO}/git/refs" \
-              -f "ref=refs/tags/${tag}" -f "sha=${baseline_sha}" >/dev/null
+              -f "ref=refs/tags/${tag}" -f "sha=${baseline_sha}"
           fi
 
           verified="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}")"
