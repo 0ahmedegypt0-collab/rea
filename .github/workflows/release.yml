@@ -112,17 +112,20 @@ jobs:
           echo "Baseline is an ancestor of source ${SOURCE_SHA}."
 
           existing="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}" 2>/dev/null || true)"
-          if [[ -n "$existing" ]]; then
+          if jq -e '.object.type == "commit" and (.object.sha | type == "string")' <<< "$existing" >/dev/null 2>&1; then
             existing_sha="$(jq -er '.object.sha' <<< "$existing")"
             if [[ "$existing_sha" != "$baseline_sha" ]]; then
               echo "Fork tag ${tag} points to ${existing_sha}, expected verified upstream baseline ${baseline_sha}; refusing to move it." >&2
               exit 1
             fi
             echo "Fork already has the correct baseline tag."
-          else
+          elif jq -e '.status == 404' <<< "$existing" >/dev/null 2>&1; then
             echo "Creating missing baseline tag in ${GH_REPO}."
             gh api --method POST "repos/${GH_REPO}/git/refs" \
               -f "ref=refs/tags/${tag}" -f "sha=${baseline_sha}"
+          else
+            echo "Unable to inspect the fork baseline tag safely: ${existing}" >&2
+            exit 1
           fi
 
           verified="$(gh api "repos/${GH_REPO}/git/ref/tags/${tag}")"
