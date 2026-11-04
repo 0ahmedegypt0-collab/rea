@@ -91,8 +91,8 @@ jobs:
       - name: Restore the verified upstream release baseline tag in this fork
         if: steps.editorial.outputs.frozen != 'true'
         env:
-          # Use the workflow's repository-scoped token for the fork tag write.
-          GH_TOKEN: ${{ github.token }}
+          # Prefer the dedicated release credential for the fork tag write.
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
         shell: bash
