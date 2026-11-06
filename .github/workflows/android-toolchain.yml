@@ -49,6 +49,18 @@ jobs:
           grep -F 'TERMUX_PKG_SRCURL="https://vie.at.distfiles.macports.org/dialog/dialog-${TERMUX_PKG_VERSION}.tgz"' packages/dialog/build.sh
           grep -F 'TERMUX_PKG_SHA256=62bdf59057d4f760a1cc2217827f07887b4a3eebf694c25eacd4803d2171cdc6' packages/dialog/build.sh
 
+      - name: Use Debian's immutable texinfo packaging archive
+        working-directory: termux-packages
+        run: |
+          # Salsa's generated archive returned bytes that did not match the
+          # pinned checksum. Use Debian's published source-package archive.
+          sed -i \\
+            -e 's|https://salsa.debian.org/tex-team/texinfo/-/archive/debian/\$\{TERMUX_PKG_VERSION\}\$\{_DEBIAN_REVISION\}/texinfo-debian-\$\{TERMUX_PKG_VERSION\}\$\{_DEBIAN_REVISION\}\.tar\.gz|https://deb.debian.org/debian/pool/main/t/texinfo/texinfo_\$\{TERMUX_PKG_VERSION\}\$\{_DEBIAN_REVISION\}.debian.tar.xz|' \\
+            -e 's/9d2eab3f012d06452f16253ae050b90bce9c1bac165703b84382a703253218bc/360ec48b1b37d3694e4a8652119f7015de967f6a05f4d16abba31db39b428eb1/' \\
+            packages/texinfo/build.sh
+          grep -F 'https://deb.debian.org/debian/pool/main/t/texinfo/texinfo_\$\{TERMUX_PKG_VERSION\}\$\{_DEBIAN_REVISION\}.debian.tar.xz' packages/texinfo/build.sh
+          grep -F '360ec48b1b37d3694e4a8652119f7015de967f6a05f4d16abba31db39b428eb1' packages/texinfo/build.sh
+
       - name: Rebuild package prefix for this Android application ID
         working-directory: termux-packages
         run: |
