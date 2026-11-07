@@ -59,14 +59,14 @@ jobs:
           path = Path("packages/texinfo/build.sh")
           content = path.read_text()
           old_url = "https://salsa.debian.org/tex-team/texinfo/-/archive/debian/${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}/texinfo-debian-${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.tar.gz"
-          new_url = "https://deb.debian.org/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz"
+          new_url = "https://ftp.task.gda.pl/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz"
           old_hash = "9d2eab3f012d06452f16253ae050b90bce9c1bac165703b84382a703253218bc"
           new_hash = "360ec48b1b37d3694e4a8652119f7015de967f6a05f4d16abba31db39b428eb1"
           assert content.count(old_url) == 1, "Expected exactly one pinned Salsa URL"
           assert content.count(old_hash) == 1, "Expected exactly one pinned Salsa checksum"
           path.write_text(content.replace(old_url, new_url).replace(old_hash, new_hash))
           PY
-          grep -F 'https://deb.debian.org/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz' packages/texinfo/build.sh
+          grep -F 'https://ftp.task.gda.pl/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz' packages/texinfo/build.sh
           grep -F '360ec48b1b37d3694e4a8652119f7015de967f6a05f4d16abba31db39b428eb1' packages/texinfo/build.sh
 
       - name: Rebuild package prefix for this Android application ID
