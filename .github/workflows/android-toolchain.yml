@@ -68,6 +68,32 @@ jobs:
           PY
           grep -F 'https://ftp.task.gda.pl/debian/pool/main/t/texinfo/texinfo_${TERMUX_PKG_VERSION}${_DEBIAN_REVISION}.debian.tar.xz' packages/texinfo/build.sh
           grep -F '360ec48b1b37d3694e4a8652119f7015de967f6a05f4d16abba31db39b428eb1' packages/texinfo/build.sh
+          # Debian's .debian.tar.xz extracts with a different top-level layout
+          # than Salsa's generated archive. Locate its debian/ directory safely.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path("packages/texinfo/build.sh")
+          content = path.read_text()
+          pattern = re.compile(r'termux_step_post_get_source\(\) \{.*?\n\}', re.S)
+          replacement = '''termux_step_post_get_source() {
+          	if [[ -d "${TERMUX_PKG_SRCDIR}/debian" ]]; then
+          		return
+          	fi
+          	local debian_dir
+          	debian_dir="$(find "${TERMUX_PKG_SRCDIR}" -mindepth 2 -maxdepth 5 -type d -name debian -print -quit)"
+          	if [[ -z "${debian_dir}" ]]; then
+          		echo "Unable to locate Debian packaging directory in ${TERMUX_PKG_SRCDIR}" >&2
+          		find "${TERMUX_PKG_SRCDIR}" -maxdepth 4 -type d -print >&2
+          		exit 1
+          	fi
+          	mv "${debian_dir}" "${TERMUX_PKG_SRCDIR}/debian"
+          }'''
+          updated, count = pattern.subn(lambda _: replacement, content)
+          assert count == 1, f"Expected one post-source hook, found {count}"
+          path.write_text(updated)
+          PY
+          grep -A14 -F 'termux_step_post_get_source() {' packages/texinfo/build.sh
 
       - name: Rebuild package prefix for this Android application ID
         working-directory: termux-packages
