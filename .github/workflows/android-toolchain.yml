@@ -152,12 +152,24 @@ jobs:
           echo "Unable to pull the pinned Termux builder image after three attempts" >&2
           exit 1
 
-      - name: Declare libsndfile as a PulseAudio build dependency
+      - name: Disable optional PulseAudio sndfile module for standalone runtime
         working-directory: termux-packages
         run: |
-          grep -F 'TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check"' packages/pulseaudio/build.sh
-          sed -i 's/TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check"/TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check, libsndfile"/' packages/pulseaudio/build.sh
-          grep -F 'TERMUX_PKG_BUILD_DEPENDS="libtool, glib, check, libsndfile"' packages/pulseaudio/build.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("packages/pulseaudio/build.sh")
+          content = path.read_text()
+          old_depends = 'TERMUX_PKG_DEPENDS="dbus, libandroid-stub, libandroid-execinfo, libandroid-glob, libc++, libltdl, libsndfile, libsoxr, libwebrtc-audio-processing, speexdsp"'
+          new_depends = 'TERMUX_PKG_DEPENDS="dbus, libandroid-stub, libandroid-execinfo, libandroid-glob, libc++, libltdl, libsoxr, libwebrtc-audio-processing, speexdsp"'
+          old_args = '-D database=simple"'
+          new_args = '-D database=simple\n-D sndfile=disabled"'
+          assert content.count(old_depends) == 1, "Expected PulseAudio runtime dependency list"
+          assert content.count(old_args) == 1, "Expected PulseAudio Meson options"
+          content = content.replace(old_depends, new_depends).replace(old_args, new_args)
+          path.write_text(content)
+          PY
+          grep -F 'TERMUX_PKG_DEPENDS="dbus, libandroid-stub, libandroid-execinfo, libandroid-glob, libc++, libltdl, libsoxr, libwebrtc-audio-processing, speexdsp"' packages/pulseaudio/build.sh
+          grep -F -- '-D sndfile=disabled' packages/pulseaudio/build.sh
 
       - name: Build Android userland tools and Python runtime
         working-directory: termux-packages
