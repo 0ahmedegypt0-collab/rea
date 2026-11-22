@@ -51,6 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           npm install
+          npm run build
           stage="${{ runner.temp }}/rea-engine-bundle"
           rm -rf "$stage"
           mkdir -p "$stage/package"
