@@ -176,30 +176,43 @@ class ReaRuntimeModule : Module() {
 
     val staging = File(context.filesDir, stagingName)
     val backup = File(context.filesDir, backupName)
+    val marker = File(appFilesDirectory(), markerName)
+    val markerTemp = File(appFilesDirectory(), "$markerName.tmp")
     removeRecursively(staging)
     removeRecursively(backup)
+    removeRecursively(markerTemp)
     var actual = ""
+    var previousMoved = false
+    var activated = false
     try {
       val digest = MessageDigest.getInstance("SHA-256")
       context.assets.open(archiveName).use { raw ->
         extractArchive(DigestInputStream(raw, digest), staging, archiveRootName, requiredRelativePath, destination)
       }
       actual = digest.digest().joinToString("") { "%02x".format(it) }
-      if (expected != actual) {
-        throw IllegalStateException("Checksum verification failed for $archiveName")
-      }
-      if (destination.exists() && !destination.renameTo(backup)) {
-        throw IllegalStateException("Could not move the previous private installation aside")
+      if (expected != actual) throw IllegalStateException("Checksum verification failed for $archiveName")
+
+      if (destination.exists()) {
+        if (!destination.renameTo(backup)) throw IllegalStateException("Could not move the previous private installation aside")
+        previousMoved = true
       }
       val stagedRoot = File(staging, archiveRootName)
-      if (!stagedRoot.renameTo(destination)) {
-        if (backup.exists()) backup.renameTo(destination)
-        throw IllegalStateException("Could not activate the new app-private installation")
-      }
+      if (!stagedRoot.renameTo(destination)) throw IllegalStateException("Could not activate the new app-private installation")
+      activated = true
+
+      markerTemp.writeText(actual)
+      if (!markerTemp.renameTo(marker)) throw IllegalStateException("Could not atomically update the installation marker")
+      // Keep the backup until the new installation and marker are committed.
       removeRecursively(backup)
-      File(appFilesDirectory(), markerName).writeText(actual)
+    } catch (cause: Exception) {
+      if (activated) removeRecursively(destination)
+      if (previousMoved && backup.exists() && !backup.renameTo(destination)) {
+        throw IllegalStateException("Installation failed and the previous installation could not be restored", cause)
+      }
+      throw cause
     } finally {
       removeRecursively(staging)
+      removeRecursively(markerTemp)
     }
 
     return mapOf(
