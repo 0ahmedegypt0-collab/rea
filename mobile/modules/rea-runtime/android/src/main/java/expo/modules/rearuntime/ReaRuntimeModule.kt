@@ -178,11 +178,14 @@ class ReaRuntimeModule : Module() {
     val backup = File(context.filesDir, backupName)
     val marker = File(appFilesDirectory(), markerName)
     val markerTemp = File(appFilesDirectory(), "$markerName.tmp")
+    val markerBackup = File(appFilesDirectory(), "$markerName.bak")
     removeRecursively(staging)
     removeRecursively(backup)
     removeRecursively(markerTemp)
+    removeRecursively(markerBackup)
     var actual = ""
     var previousMoved = false
+    var markerPreviousMoved = false
     var activated = false
     try {
       val digest = MessageDigest.getInstance("SHA-256")
@@ -201,18 +204,28 @@ class ReaRuntimeModule : Module() {
       activated = true
 
       markerTemp.writeText(actual)
+      if (marker.exists()) {
+        if (!marker.renameTo(markerBackup)) throw IllegalStateException("Could not preserve the previous installation marker")
+        markerPreviousMoved = true
+      }
       if (!markerTemp.renameTo(marker)) throw IllegalStateException("Could not atomically update the installation marker")
-      // Keep the backup until the new installation and marker are committed.
+      // Keep both backups until the new installation and marker are committed.
       removeRecursively(backup)
+      removeRecursively(markerBackup)
     } catch (cause: Exception) {
       if (activated) removeRecursively(destination)
       if (previousMoved && backup.exists() && !backup.renameTo(destination)) {
         throw IllegalStateException("Installation failed and the previous installation could not be restored", cause)
       }
+      if (marker.exists()) removeRecursively(marker)
+      if (markerPreviousMoved && markerBackup.exists() && !markerBackup.renameTo(marker)) {
+        throw IllegalStateException("Installation failed and the previous marker could not be restored", cause)
+      }
       throw cause
     } finally {
       removeRecursively(staging)
       removeRecursively(markerTemp)
+      removeRecursively(markerBackup)
     }
 
     return mapOf(
