@@ -387,21 +387,47 @@ export default function App() {
               <Text style={styles.selectedTool}>
                 الأداة المحددة: {selectedTool.name}
               </Text>
-              {!!selectedTool.inputSchema && (
-                <Text selectable style={styles.schemaText}>
-                  {JSON.stringify(selectedTool.inputSchema, null, 2)}
-                </Text>
-              )}
-              <TextInput
-                value={toolArguments}
-                onChangeText={setToolArguments}
-                placeholder='{"key":"value"}'
-                placeholderTextColor={COLORS.muted}
-                style={styles.jsonInput}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              {(() => {
+                const schema = selectedTool.inputSchema as {
+                  properties?: Record<string, { type?: string; description?: string; enum?: unknown[] }>;
+                  required?: string[];
+                } | undefined;
+                const props = schema?.properties ?? {};
+                const entries = Object.entries(props);
+                if (!entries.length) return (
+                  <TextInput
+                    value={toolArguments}
+                    onChangeText={setToolArguments}
+                    placeholder='{"key":"value"}'
+                    placeholderTextColor={COLORS.muted}
+                    style={styles.jsonInput}
+                    multiline
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                );
+                let values: Record<string, unknown> = {};
+                try { values = JSON.parse(toolArguments); } catch {}
+                return entries.map(([key, field]) => (
+                  <View key={key} style={{ gap: 5 }}>
+                    <Text style={styles.toolName}>{key}{schema?.required?.includes(key) ? " *" : ""}</Text>
+                    {!!field.description && <Text style={styles.toolDescription}>{field.description}</Text>}
+                    <TextInput
+                      value={typeof values[key] === "string" ? values[key] as string : values[key] == null ? "" : String(values[key])}
+                      onChangeText={(value) => {
+                        const next = { ...values, [key]: field.type === "number" ? (value === "" ? undefined : Number(value)) : field.type === "boolean" ? value.toLowerCase() === "true" : value };
+                        setToolArguments(JSON.stringify(next));
+                      }}
+                      placeholder={field.type === "boolean" ? "true / false" : field.type === "number" ? "0" : "أدخل القيمة"}
+                      placeholderTextColor={COLORS.muted}
+                      style={styles.searchInput}
+                      keyboardType={field.type === "number" ? "numeric" : "default"}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                ));
+              })()}
               <TouchableOpacity
                 style={[
                   styles.primaryButton,
