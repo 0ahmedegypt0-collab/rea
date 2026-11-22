@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           npm install
-          npm run build
+          npm run build:cached
           stage="${{ runner.temp }}/rea-engine-bundle"
           rm -rf "$stage"
           mkdir -p "$stage/package"
