@@ -115,7 +115,20 @@ class ReaRuntimeModule : Module() {
           }
           entry.isFile -> {
             output.parentFile?.mkdirs()
-            FileOutputStream(output).use { destination -> tar.copyTo(destination) }
+            FileOutputStream(output).use { destination ->
+              // Copy only this TAR entry. InputStream.copyTo() would consume
+              // the remaining archive and skip all subsequent entries.
+              var remaining = entry.size
+              val buffer = ByteArray(64 * 1024)
+              while (remaining > 0) {
+                val count = tar.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
+                if (count < 0) {
+                  throw IllegalStateException("Unexpected end of archive while extracting ${entry.name}")
+                }
+                destination.write(buffer, 0, count)
+                remaining -= count
+              }
+            }
             Os.chmod(output.absolutePath, entry.mode.toInt() and 0x1ff)
           }
           else -> throw IllegalStateException("Unsupported archive entry type: ${entry.name}")
