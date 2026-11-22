@@ -147,6 +147,30 @@ export default function App() {
     setToolResult("");
     try {
       const parsed = JSON.parse(toolArguments);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("يجب إدخال كائن JSON صالح لمعاملات الأداة");
+      }
+      const schema = selectedTool.inputSchema as {
+        required?: string[];
+        properties?: Record<string, { type?: string }>;
+      } | undefined;
+      const required = schema?.required ?? [];
+      const missing = required.filter(
+        (key) => parsed[key] === undefined || parsed[key] === null || parsed[key] === "",
+      );
+      if (missing.length) {
+        throw new Error("أكمل الحقول المطلوبة أولًا: " + missing.join(", "));
+      }
+      for (const [key, field] of Object.entries(schema?.properties ?? {})) {
+        const value = parsed[key];
+        if (value === undefined || value === null || value === "") continue;
+        if ((field.type === "number" || field.type === "integer") && (typeof value !== "number" || !Number.isFinite(value))) {
+          throw new Error("القيمة الرقمية غير صالحة في الحقل: " + key);
+        }
+        if (field.type === "integer" && typeof value === "number" && !Number.isInteger(value)) {
+          throw new Error("يجب أن تكون القيمة عددًا صحيحًا في الحقل: " + key);
+        }
+      }
       const result = await ReaRuntime.callTool(
         selectedTool.name,
         JSON.stringify(parsed),
