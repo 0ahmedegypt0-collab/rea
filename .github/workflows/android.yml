@@ -53,11 +53,11 @@ jobs:
           npm install
           stage="${{ runner.temp }}/rea-engine-bundle"
           rm -rf "$stage"
-          mkdir -p "$stage/rea-engine"
-          rsync -a --exclude='.git' --exclude='mobile' --exclude='termux-packages' --exclude='node_modules/.cache' ./ "$stage/rea-engine/"
+          mkdir -p "$stage/package"
+          rsync -a --exclude='.git' --exclude='mobile' --exclude='termux-packages' --exclude='node_modules/.cache' ./ "$stage/package/"
           # Include installed runtime dependencies and generated distributions.
-          rsync -a node_modules "$stage/rea-engine/"
-          tar -czf mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.tar.gz -C "$stage" rea-engine
+          rsync -a node_modules "$stage/package/"
+          tar -czf mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.tar.gz -C "$stage" package
           (cd mobile/modules/rea-runtime/android/src/main/assets && sha256sum rea-engine-js.tar.gz > rea-engine-js.sha256)
           test -s mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.tar.gz
           sha256sum -c mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.sha256
