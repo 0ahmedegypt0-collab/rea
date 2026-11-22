@@ -7,6 +7,7 @@ on:
       - "scripts/android/**"
       - "scripts/verify/termux/**"
       - ".github/workflows/android-node-runtime.yml"
+      - ".github/workflows/android-toolchain.yml"
 
 permissions:
   contents: read
