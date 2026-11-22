@@ -412,6 +412,19 @@ export default function App() {
                   <View key={key} style={{ gap: 5 }}>
                     <Text style={styles.toolName}>{key}{schema?.required?.includes(key) ? " *" : ""}</Text>
                     {!!field.description && <Text style={styles.toolDescription}>{field.description}</Text>}
+                    {!!field.enum?.length && (
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                        {field.enum.map((choice) => (
+                          <TouchableOpacity
+                            key={String(choice)}
+                            style={[styles.toolItem, values[key] === choice && styles.toolItemActive]}
+                            onPress={() => setToolArguments(JSON.stringify({ ...values, [key]: choice }))}
+                          >
+                            <Text style={styles.toolName}>{String(choice)}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
                     <TextInput
                       value={typeof values[key] === "string" ? values[key] as string : values[key] == null ? "" : String(values[key])}
                       onChangeText={(value) => {
