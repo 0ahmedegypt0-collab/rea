@@ -284,9 +284,18 @@ class ReaRuntimeModule : Module() {
       } catch (_: Exception) {
         continue
       }
-      if (message.opt("id")?.toString() == id.toString()) {
+      if (message.has("id")) {
+        val responseId = message.opt("id")
+        val matches = when (responseId) {
+          is Number -> responseId.toLong() == id.toLong()
+          else -> responseId?.toString() == id.toString()
+        }
+        if (!matches) {
+          throw IllegalStateException("REA MCP returned an unexpected response id: $responseId (expected $id)")
+        }
         if (message.has("error")) {
-          throw IllegalStateException("REA MCP request failed: " + message.optJSONObject("error"))
+          val rpcError = message.optJSONObject("error")
+          throw IllegalStateException("REA MCP request failed: " + (rpcError?.toString() ?: message.opt("error")))
         }
         return message
       }
