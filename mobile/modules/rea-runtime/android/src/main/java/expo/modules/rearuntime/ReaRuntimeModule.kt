@@ -509,10 +509,22 @@ class ReaRuntimeModule : Module() {
     }
 
     AsyncFunction("cancelMcp") {
-      val process = mcpProcess
-      if (process != null && process.isAlive) {
-        process.destroy()
-        if (!process.waitFor(2, TimeUnit.SECONDS)) process.destroyForcibly()
+      synchronized(mcpLock) {
+        val process = mcpProcess
+        // Clear the session state atomically with cancellation, preventing
+        // another MCP request from reusing a process being torn down.
+        mcpProcess = null
+        mcpReader = null
+        mcpWriter = null
+        mcpInitializeResult = null
+        if (process != null && process.isAlive) {
+          process.destroy()
+          try {
+            if (!process.waitFor(2, TimeUnit.SECONDS)) process.destroyForcibly()
+          } catch (_: Exception) {
+            process.destroyForcibly()
+          }
+        }
       }
       true
     }
