@@ -1,9 +1,6 @@
 name: REA Android APK
 
 on:
-  push:
-    branches:
-      - rea-android-app-ui-foundation
   workflow_dispatch:
     inputs:
       toolchain_run_id:
