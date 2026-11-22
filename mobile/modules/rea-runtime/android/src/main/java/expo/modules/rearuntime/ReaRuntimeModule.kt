@@ -139,10 +139,11 @@ class ReaRuntimeModule : Module() {
         val drain = ByteArray(64 * 1024)
         while (gzip.read(drain) >= 0) {
           // Consume the gzip trailer so the streaming SHA-256 covers the complete asset.
+          // Do not suppress gzip/CRC errors: a corrupt archive must fail installation.
         }
-      } catch (_: Exception) {
+      } finally {
+        tar.close()
       }
-      tar.close()
     }
 
     if (!File(extractedRoot, requiredRelativePath).isFile) {
