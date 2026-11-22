@@ -5,20 +5,65 @@ on:
     branches:
       - rea-android-app-ui-foundation
   workflow_dispatch:
+    inputs:
+      toolchain_run_id:
+        description: "Successful app-private runtime/toolchain workflow run ID"
+        required: true
+        default: "0"
+        type: string
+  workflow_run:
+    workflows: ["Build app-private Android toolchain"]
+    types: [completed]
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+      - name: Download merged runtime/toolchain artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rea-android-runtime-arm64-candidate
+          path: ${{ runner.temp }}/rea-android-runtime
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.toolchain_run_id }}
+      - name: Prepare native module runtime assets
+        run: |
+          set -euo pipefail
+          asset_dir="mobile/modules/rea-runtime/android/src/main/assets"
+          mkdir -p "$asset_dir"
+          cp "${{ runner.temp }}/rea-android-runtime/rea-runtime-arm64.tar.gz" "$asset_dir/"
+          cp "${{ runner.temp }}/rea-android-runtime/rea-runtime-arm64.sha256" "$asset_dir/"
+          test -s "$asset_dir/rea-runtime-arm64.tar.gz"
+          test -s "$asset_dir/rea-runtime-arm64.sha256"
+          sha256sum -c "$asset_dir/rea-runtime-arm64.sha256"
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build engine bundle archive
+        run: |
+          set -euo pipefail
+          npm install
+          stage="${{ runner.temp }}/rea-engine-bundle"
+          rm -rf "$stage"
+          mkdir -p "$stage/rea-engine"
+          rsync -a --exclude='.git' --exclude='mobile' --exclude='termux-packages' --exclude='node_modules/.cache' ./ "$stage/rea-engine/"
+          # Include installed runtime dependencies and generated distributions.
+          rsync -a node_modules "$stage/rea-engine/"
+          tar -czf mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.tar.gz -C "$stage" rea-engine
+          (cd mobile/modules/rea-runtime/android/src/main/assets && sha256sum rea-engine-js.tar.gz > rea-engine-js.sha256)
+          test -s mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.tar.gz
+          sha256sum -c mobile/modules/rea-runtime/android/src/main/assets/rea-engine-js.sha256
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
