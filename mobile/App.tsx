@@ -152,7 +152,16 @@ export default function App() {
       }
       const schema = selectedTool.inputSchema as {
         required?: string[];
-        properties?: Record<string, { type?: string }>;
+        properties?: Record<string, {
+          type?: string;
+          enum?: unknown[];
+          minimum?: number;
+          maximum?: number;
+          minLength?: number;
+          maxLength?: number;
+          minItems?: number;
+          maxItems?: number;
+        }>;
       } | undefined;
       const required = schema?.required ?? [];
       const missing = required.filter(
@@ -164,11 +173,47 @@ export default function App() {
       for (const [key, field] of Object.entries(schema?.properties ?? {})) {
         const value = parsed[key];
         if (value === undefined || value === null || value === "") continue;
-        if ((field.type === "number" || field.type === "integer") && (typeof value !== "number" || !Number.isFinite(value))) {
-          throw new Error("القيمة الرقمية غير صالحة في الحقل: " + key);
+        if (field.enum && !field.enum.some((option) => Object.is(option, value))) {
+          throw new Error("القيمة غير موجودة ضمن الخيارات المسموح بها: " + key);
         }
-        if (field.type === "integer" && typeof value === "number" && !Number.isInteger(value)) {
-          throw new Error("يجب أن تكون القيمة عددًا صحيحًا في الحقل: " + key);
+        if (field.type === "number" || field.type === "integer") {
+          if (typeof value !== "number" || !Number.isFinite(value)) {
+            throw new Error("القيمة الرقمية غير صالحة في الحقل: " + key);
+          }
+          if (field.type === "integer" && !Number.isInteger(value)) {
+            throw new Error("يجب أن تكون القيمة عددًا صحيحًا في الحقل: " + key);
+          }
+          if (field.minimum !== undefined && value < field.minimum) {
+            throw new Error("القيمة أقل من الحد الأدنى (" + field.minimum + "): " + key);
+          }
+          if (field.maximum !== undefined && value > field.maximum) {
+            throw new Error("القيمة أكبر من الحد الأعلى (" + field.maximum + "): " + key);
+          }
+        }
+        if (field.type === "string" && typeof value === "string") {
+          if (field.minLength !== undefined && value.length < field.minLength) {
+            throw new Error("النص أقصر من الحد المطلوب: " + key);
+          }
+          if (field.maxLength !== undefined && value.length > field.maxLength) {
+            throw new Error("النص أطول من الحد المسموح: " + key);
+          }
+        }
+        if (field.type === "array" && Array.isArray(value)) {
+          if (field.minItems !== undefined && value.length < field.minItems) {
+            throw new Error("عدد العناصر أقل من المطلوب: " + key);
+          }
+          if (field.maxItems !== undefined && value.length > field.maxItems) {
+            throw new Error("عدد العناصر تجاوز الحد: " + key);
+          }
+        }
+        if (field.type === "array" && !Array.isArray(value)) {
+          throw new Error("هذا الحقل يجب أن يكون قائمة: " + key);
+        }
+        if (field.type === "object" && (typeof value !== "object" || Array.isArray(value))) {
+          throw new Error("هذا الحقل يجب أن يكون كائنًا: " + key);
+        }
+        if (field.type === "boolean" && typeof value !== "boolean") {
+          throw new Error("هذا الحقل يجب أن يكون true أو false: " + key);
         }
       }
       const result = await ReaRuntime.callTool(
