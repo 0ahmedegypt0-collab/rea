@@ -403,15 +403,24 @@ class ReaRuntimeModule : Module() {
   }
 
   private fun stopMcpInternal() {
-    try {
-      mcpWriter?.close()
-    } catch (_: Exception) {
-    }
-    try {
-      mcpReader?.close()
-    } catch (_: Exception) {
-    }
     val process = mcpProcess
+    // Detach the process and streams first so a failed shutdown cannot leave
+    // stale references that make the next start believe the MCP is still usable.
+    val writer = mcpWriter
+    val reader = mcpReader
+    mcpProcess = null
+    mcpReader = null
+    mcpWriter = null
+    mcpInitializeResult = null
+
+    try {
+      writer?.close()
+    } catch (_: Exception) {
+    }
+    try {
+      reader?.close()
+    } catch (_: Exception) {
+    }
     if (process != null) {
       try {
         if (!process.waitFor(2, TimeUnit.SECONDS)) {
@@ -422,10 +431,6 @@ class ReaRuntimeModule : Module() {
         process.destroyForcibly()
       }
     }
-    mcpProcess = null
-    mcpReader = null
-    mcpWriter = null
-    mcpInitializeResult = null
   }
 
   override fun definition() = ModuleDefinition {
