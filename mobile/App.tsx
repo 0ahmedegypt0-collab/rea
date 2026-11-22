@@ -389,11 +389,14 @@ export default function App() {
               </Text>
               {(() => {
                 const schema = selectedTool.inputSchema as {
-                  properties?: Record<string, { type?: string; description?: string; enum?: unknown[] }>;
+                  properties?: Record<string, { type?: string; description?: string; enum?: unknown[]; items?: unknown; default?: unknown }>;
                   required?: string[];
                 } | undefined;
                 const props = schema?.properties ?? {};
                 const entries = Object.entries(props);
+                let values: Record<string, unknown> = {};
+                try { values = JSON.parse(toolArguments); } catch {}
+                const missing = (schema?.required ?? []).filter((key) => values[key] === undefined || values[key] === null || values[key] === "");
                 if (!entries.length) return (
                   <TextInput
                     value={toolArguments}
@@ -406,40 +409,59 @@ export default function App() {
                     autoCorrect={false}
                   />
                 );
-                let values: Record<string, unknown> = {};
-                try { values = JSON.parse(toolArguments); } catch {}
-                return entries.map(([key, field]) => (
-                  <View key={key} style={{ gap: 5 }}>
-                    <Text style={styles.toolName}>{key}{schema?.required?.includes(key) ? " *" : ""}</Text>
-                    {!!field.description && <Text style={styles.toolDescription}>{field.description}</Text>}
-                    {!!field.enum?.length && (
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                        {field.enum.map((choice) => (
-                          <TouchableOpacity
-                            key={String(choice)}
-                            style={[styles.toolItem, values[key] === choice && styles.toolItemActive]}
-                            onPress={() => setToolArguments(JSON.stringify({ ...values, [key]: choice }))}
-                          >
-                            <Text style={styles.toolName}>{String(choice)}</Text>
-                          </TouchableOpacity>
-                        ))}
+                return (
+                  <>
+                    {entries.map(([key, field]) => (
+                      <View key={key} style={{ gap: 5 }}>
+                        <Text style={styles.toolName}>{key}{schema?.required?.includes(key) ? " *" : ""}</Text>
+                        {!!field.description && <Text style={styles.toolDescription}>{field.description}</Text>}
+                        {!!field.enum?.length && (
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                            {field.enum.map((choice) => (
+                              <TouchableOpacity
+                                key={String(choice)}
+                                style={[styles.toolItem, values[key] === choice && styles.toolItemActive]}
+                                onPress={() => setToolArguments(JSON.stringify({ ...values, [key]: choice }))}
+                              >
+                                <Text style={styles.toolName}>{String(choice)}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        )}
+                        {field.type === "boolean" ? (
+                          <View style={{ flexDirection: "row", gap: 8 }}>
+                            {[true, false].map((choice) => (
+                              <TouchableOpacity
+                                key={String(choice)}
+                                style={[styles.toolItem, values[key] === choice && styles.toolItemActive]}
+                                onPress={() => setToolArguments(JSON.stringify({ ...values, [key]: choice }))}
+                              >
+                                <Text style={styles.toolName}>{choice ? "true" : "false"}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        ) : (
+                          <TextInput
+                            value={typeof values[key] === "string" ? values[key] as string : values[key] == null ? "" : typeof values[key] === "object" ? JSON.stringify(values[key]) : String(values[key])}
+                            onChangeText={(value) => {
+                              let parsed: unknown = value;
+                              if (field.type === "number" || field.type === "integer") parsed = value === "" ? undefined : Number(value);
+                              else if (field.type === "array" || field.type === "object") { try { parsed = value === "" ? undefined : JSON.parse(value); } catch { parsed = value; } }
+                              setToolArguments(JSON.stringify({ ...values, [key]: parsed }));
+                            }}
+                            placeholder={field.type === "array" ? "JSON array: [ ... ]" : field.type === "object" ? "JSON object: { ... }" : field.type === "number" || field.type === "integer" ? "0" : "أدخل القيمة"}
+                            placeholderTextColor={COLORS.muted}
+                            style={styles.searchInput}
+                            keyboardType={field.type === "number" || field.type === "integer" ? "numeric" : "default"}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                          />
+                        )}
                       </View>
-                    )}
-                    <TextInput
-                      value={typeof values[key] === "string" ? values[key] as string : values[key] == null ? "" : String(values[key])}
-                      onChangeText={(value) => {
-                        const next = { ...values, [key]: field.type === "number" ? (value === "" ? undefined : Number(value)) : field.type === "boolean" ? value.toLowerCase() === "true" : value };
-                        setToolArguments(JSON.stringify(next));
-                      }}
-                      placeholder={field.type === "boolean" ? "true / false" : field.type === "number" ? "0" : "أدخل القيمة"}
-                      placeholderTextColor={COLORS.muted}
-                      style={styles.searchInput}
-                      keyboardType={field.type === "number" ? "numeric" : "default"}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                  </View>
-                ));
+                    ))}
+                    {!!missing.length && <Text style={styles.error}>حقول مطلوبة: {missing.join(", ")}</Text>}
+                  </>
+                );
               })()}
               <TouchableOpacity
                 style={[
